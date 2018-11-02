@@ -2,29 +2,19 @@ using System;
 using UnityEngine;
 
 namespace Game.Shooter {
-    public class Moving : MonoBehaviour {
+    public class Moving : Network.LockBehaviour {
         public float speed;
 
-        protected void FixedUpdate() {
-            Vector2Int axis = new Vector2Int();
-            
-            if (Input.GetKey(KeyCode.A)) {
-                axis.x = -1;
-            }
-            else if (Input.GetKey(KeyCode.D)) {
-                axis.x = 1;
-            }
+        private Input input;
 
-            if (Input.GetKey(KeyCode.W)) {
-                axis.y = 1;
-            }
-            else if (Input.GetKey(KeyCode.S)) {
-                axis.y = -1;
-            }
+        protected void Start() {
+            this.input = this.GetComponent<Input>();
+        }
 
-            if (axis.x != 0 || axis.y != 0) {
-                this.transform.Translate(this.speed * axis.x, 0, this.speed * axis.y);
-            }            
+        protected override void LockUpdate() {
+            if (this.input.vertical != 0 || this.input.horizontal != 0) {
+                this.transform.Translate(this.speed * this.input.vertical, 0, this.speed * -this.input.horizontal);
+            }
         }
     }
 }

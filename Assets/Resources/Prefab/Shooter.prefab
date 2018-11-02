@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 33892876859761196}
   - component: {fileID: 23241589759478280}
   - component: {fileID: 65303240635140922}
+  - component: {fileID: 114030440555276498}
   - component: {fileID: 114531467556463186}
   - component: {fileID: 114313913941381814}
   m_Layer: 0
@@ -98,6 +99,17 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &114030440555276498
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1305288935935582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54a4bcd5972f044e9a93f474462f840e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114313913941381814
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -109,6 +121,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c93873beefe64a358644dc3b5db079c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  orderType: 0
   speed: 1
   bullet: {fileID: 1391275958826212, guid: fc142f748f89f4ab4b285343a301c8c8, type: 2}
 --- !u!114 &114531467556463186
@@ -122,4 +135,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6d18c779334b4e50abff22aa2d695df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 1
+  orderType: 0
+  speed: 0.5

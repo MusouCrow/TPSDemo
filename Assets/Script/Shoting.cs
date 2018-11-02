@@ -2,11 +2,11 @@ using System;
 using UnityEngine;
 
 namespace Game {
-    public class Shoting : MonoBehaviour {
+    public class Shoting : Network.LockBehaviour {
         public float power;
         public float speed;
         
-        protected void FixedUpdate() {
+        protected override void LockUpdate() {
             this.transform.Translate(this.power, 0, 0);
             this.power -= this.speed;
 

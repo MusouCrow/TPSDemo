@@ -2,18 +2,24 @@ using System;
 using UnityEngine;
 
 namespace Game.Shooter {
-    public class Fire : MonoBehaviour {
+    public class Fire : Network.LockBehaviour {
         public float speed;
         public GameObject bullet;
+        
+        private Input input;
 
-        protected void FixedUpdate() {
-            float value = Input.GetAxis("Mouse X");
+        protected void Start() {
+            this.input = this.GetComponent<Input>();
+        }
+
+        protected override void LockUpdate() {
+            float value = this.input.mouseX;
             
             if (value != 0) {
                 this.transform.Rotate(0, value * speed, 0);
             }
 
-            if (Input.GetKeyDown(KeyCode.Mouse0)) {
+            if (this.input.fire == KeyStatus.Pressed) {
                 GameObject.Instantiate(this.bullet, this.transform.position, this.transform.rotation);
             } 
         }
