@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Game.Shooter {
+namespace Game.Actor {
     public enum KeyStatus {Free, Pressed, Hold, Released}
 
     public class Input : MonoBehaviour {

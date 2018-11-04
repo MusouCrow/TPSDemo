@@ -54,7 +54,7 @@ namespace Game.Network {
                 return;
             }
 
-            this.updateTime += Network.STDDT;
+            this.updateTime += NetworkMgr.STDDT;
             this.kcp.Update((uint)Mathf.FloorToInt(this.updateTime * 1000));
             this.heartbeatTimer.Update();
 

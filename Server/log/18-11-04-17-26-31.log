@@ -1,0 +1,20 @@
+[:00000001] LAUNCH logger log/18-11-04-17-26-31.log
+[:00000002] LAUNCH snlua bootstrap
+[:00000003] LAUNCH snlua launcher
+[:00000004] LAUNCH snlua cdummy
+[:00000005] LAUNCH harbor 0 4
+[:00000006] LAUNCH snlua datacenterd
+[:00000007] LAUNCH snlua service_mgr
+[:00000008] LAUNCH snlua main
+[:00000008] start
+[:00000009] LAUNCH snlua gate
+[:0000000a] LAUNCH snlua lobby
+[:0000000b] LAUNCH snlua queue
+[:00000008] KILL self
+[:00000002] KILL self
+[:00000009] connect 192.168.31.5:50872
+[:00000009] disconnect 192.168.31.5:50872
+[:00000009] connect 192.168.31.5:49706
+[:00000009] disconnect 192.168.31.5:49706
+[:00000009] connect 192.168.31.5:52919
+[:00000009] disconnect 192.168.31.5:52919

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Game.Shooter {
+namespace Game.Actor {
     public class Moving : Network.LockBehaviour {
         public float speed;
 

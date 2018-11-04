@@ -21,7 +21,7 @@ namespace Game.Utility {
 			this.isRunning = false;
 		}
 
-		public void Update(float dt=Network.STDDT) {
+		public void Update(float dt=NetworkMgr.STDDT) {
 			if (!this.isRunning) {
 				return;
 			}

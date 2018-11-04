@@ -12,7 +12,7 @@ namespace Game.Network {
     }
 
     [Serializable]
-    public class PlayData1 {
+    public class PlayData {
         public string[] addrs;
         public InputData[] inputs;
     }

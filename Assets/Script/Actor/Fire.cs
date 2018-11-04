@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Game.Shooter {
+namespace Game.Actor {
     public class Fire : Network.LockBehaviour {
         public float speed;
         public GameObject bullet;

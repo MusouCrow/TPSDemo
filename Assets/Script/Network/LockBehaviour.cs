@@ -12,19 +12,19 @@ namespace Game.Network {
 
         protected void Awake() {
             if (this.orderType == OrderType.Normal) {
-                Network.UpdateEvent += this.LockUpdateWrap;
+                NetworkMgr.UpdateEvent += this.LockUpdateWrap;
             }
             else {
-                Network.LateUpdateEvent += this.LockUpdateWrap;
+                NetworkMgr.LateUpdateEvent += this.LockUpdateWrap;
             }
         }
         
         protected void OnDestroy() {
             if (this.orderType == OrderType.Normal) {
-                Network.UpdateEvent -= this.LockUpdateWrap;
+                NetworkMgr.UpdateEvent -= this.LockUpdateWrap;
             }
             else {
-                Network.LateUpdateEvent -= this.LockUpdateWrap;
+                NetworkMgr.LateUpdateEvent -= this.LockUpdateWrap;
             }
         }
 
