@@ -8,22 +8,21 @@ namespace Game.Actor {
 
     public static class ActorMgr {
         private static GameObject shooterPrefab = Resources.Load("Prefab/Shooter") as GameObject;
+        
+        public static GameObject NewShooter(string addr, float x, float z) {
+            var obj = GameObject.Instantiate(ActorMgr.shooterPrefab, new Vector3(x, 0, z), Quaternion.identity);
+            obj.name = addr;
+            var identity = obj.GetComponent<Identity>();
+            identity.addr = addr;
 
-        private static GameObject NewShooter(string addr) {
-            var go = GameObject.Instantiate(shooterPrefab);
-            go.name = addr;
-
-            return go;
+            return obj;
         }
 
-        public static void Start(string leftAddr, string rightAddr, string selfAddr) {
-            var a = ActorMgr.NewShooter(leftAddr);
-            var b = ActorMgr.NewShooter(rightAddr);
-            var self = selfAddr == leftAddr ? a : b;
+        public static void BindCamera(Transform ts) {
             var camera = GameObject.FindWithTag("MainCamera");
             var con = camera.GetComponent<ParentConstraint>();
             var source = new ConstraintSource(){
-                sourceTransform = self.transform,
+                sourceTransform = ts,
                 weight = 1
             };
 
@@ -32,9 +31,9 @@ namespace Game.Actor {
             con.AddSource(source);
         }
 
-        public static void Input(string addr, InputData data) {
-            GameObject obj = GameObject.Find(addr);
-            obj.GetComponent<Input>().SetData(data);
+        public static void Input(string addr, InputData[] datas) {
+            var obj = GameObject.Find(addr);
+            obj.GetComponent<Identity>().SetInputDatas(datas);
         }
     }
 }

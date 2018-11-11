@@ -5,37 +5,44 @@ local _TABLE = require("src.table")
 
 local _gate
 local _fds = {}
-local _deviceMap = {}
-local _inputMap = {}
-local _comparsionHandler = {}
-local _playSender = {addrs = {}, inputs = {}}
+local _inputsMap = {}
+local _playSender = {}
 local _FUNC = {}
 local _CMD = {}
-local _playerCount = 2
-local _playInterval = _SKYNET.Getenv("play_interval", true)
 local _playFrame = 1
-local _timer = 0
+local _timer = _SKYNET.now()
 local _readyPlay = false
+
+function _FUNC.NewActor(fd)
+    return {addr = _SOCKET.ToAddress(fd), x = math.random(-300, 300) * 0.01, y = math.random(-300, 300) * 0.01}
+end
 
 function _FUNC.Send(id, obj)
     _SKYNET.Send(_gate, "Send", _fds, id, obj)
 end
 
 function _FUNC.Play()
-    if (not _readyPlay) then
-        return
+    _playSender.addrs = {}
+    _playSender.inputs = {}
+    _playSender.playFrame = _playFrame
+
+    for k, v in pairs(_inputsMap) do
+        if (#v > 0) then
+            table.insert(_playSender.addrs, _SOCKET.ToAddress(k))
+            table.insert(_playSender.inputs, v)
+        end
     end
 
-    _TABLE.Clear(_playSender.addrs)
-    _TABLE.Clear(_playSender.inputs)
+    if (#_playSender.addrs == 0) then
+        _playSender.addrs = nil
+    end
 
-    for k, v in pairs(_inputMap) do
-        table.insert(_playSender.addrs, _SOCKET.ToAddress(k))
-        table.insert(_playSender.inputs, v)
+    if (#_playSender.inputs == 0) then
+        _playSender.inputs = nil
     end
 
     _FUNC.Send(_ID.input, _playSender)
-    _TABLE.Clear(_inputMap)
+    _TABLE.Clear(_inputsMap)
     _readyPlay = false
     _timer = _SKYNET.now()
     _playFrame = _playFrame + 1
@@ -45,50 +52,20 @@ function _CMD.Exit()
     _SKYNET.exit()
 end
 
-function _CMD.Start(leftFd, rightFd, leftDevice, rightDevice)
+function _CMD.Start(leftFd, rightFd)
     _fds = {leftFd, rightFd}
-    _deviceMap[leftFd] = leftDevice
-    _deviceMap[rightFd] = rightDevice
-    _FUNC.Send(_ID.start, {seed = os.time(), leftAddr = _SOCKET.ToAddress(leftFd), rightAddr = _SOCKET.ToAddress(rightFd)})
+    _FUNC.Send(_ID.start, {seed = os.time(), left = _FUNC.NewActor(leftFd), right = _FUNC.NewActor(rightFd)})
 end
 
 function _CMD.ReceiveInput(fd, obj)
-    _inputMap[fd] = obj.data
+    _inputsMap[fd] = obj.inputs
 
-    if (obj.frame == _playFrame) then
+    if (obj.playFrame == _playFrame) then
         if (not _readyPlay) then
             _readyPlay = true
-            local time = _playInterval - (_SKYNET.now() - _timer)
-            time = time < 0 and 0 or time
-            _SKYNET.timeout(time, _FUNC.Play)
         else
             _FUNC.Play()
         end
-    end
-end
-
-function _CMD.ReceiveComparison(fd, obj)
-    if (not _comparsionHandler[obj.playFrame]) then
-        _comparsionHandler[obj.playFrame] = {}
-    end
-
-    local map = _comparsionHandler[obj.playFrame]
-    map[fd] = obj.content
-
-    if (_TABLE.Count(map) == _playerCount) then
-        local lk, lv
-
-        for k, v in pairs(map) do
-            if (lv and v ~= lv) then
-                _SKYNET.Log(obj.playFrame, _deviceMap[k], v, "!=", _deviceMap[lk], lv)
-                _SKYNET.Warn()
-            end
-
-            lk = k
-            lv = v
-        end
-
-        _comparsionHandler[obj.playFrame] = nil
     end
 end
 

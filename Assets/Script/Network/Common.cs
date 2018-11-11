@@ -5,16 +5,16 @@ using UnityEngine;
 namespace Game.Network {
     [Serializable]
     public struct InputData {
-        public float vertical;
-        public float horizontal;
-        public float mouseX;
-        public bool fire;
+        public int frame;
+        public string type;
+        public object data;
     }
 
     [Serializable]
     public class PlayData {
         public string[] addrs;
-        public InputData[] inputs;
+        public InputData[][] inputs;
+        public int playFrame;
     }
 
     public static class EventCode {
@@ -49,15 +49,16 @@ namespace Game.Network {
 
         [Serializable]
         public struct Start {
-            public int seed;
-            public string leftAddr;
-            public string rightAddr;
-        }
+            [Serializable]
+            public struct Unit {
+                public float x;
+                public float y;
+                public string addr;
+            }
 
-        [Serializable]
-        public struct Input {
-            public int frame;
-            public InputData data;
+            public int seed;
+            public Unit left;
+            public Unit right;
         }
 
         [Serializable]
@@ -69,6 +70,22 @@ namespace Game.Network {
         [Serializable]
         public struct Handshake {
             public string deviceModel;
+        }
+
+        [Serializable]
+        public struct Input {
+            public InputData[] inputs;
+            public int playFrame;
+        }
+
+        [Serializable]
+        public struct Move {
+            public float x;
+            public float z; 
+        }
+
+        public struct Rotate {
+            public float value;
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json;
 
 using Debug = UnityEngine.Debug;
 
@@ -78,7 +79,7 @@ namespace Game.Network {
             byte[] buffer;
 
             if (obj != null) {
-                var data = JsonUtility.ToJson(obj);
+                var data = JsonConvert.SerializeObject(obj);
                 buffer = new byte[Encoding.UTF8.GetByteCount(data) + 1];
                 buffer[0] = id;
                 Encoding.UTF8.GetBytes(data, 0, data.Length, buffer, 1);
@@ -123,7 +124,7 @@ namespace Game.Network {
             var obj = new Datas.Disconnect() {
                 exitCode = exitCode
             };
-            this.SendEvent(EventCode.Disconnect, JsonUtility.ToJson(obj));
+            this.SendEvent(EventCode.Disconnect, JsonConvert.SerializeObject(obj));
 
             return true;
         }

@@ -1,31 +1,65 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json;
 
 using Random = UnityEngine.Random;
 
 namespace Game.Network {
     using Actor;
     using Utility;
-    using Input = UnityEngine.Input;
 
     public class NetworkMgr : MonoBehaviour {
-        public const float STDDT = 0.017f;
         public static event Action UpdateEvent;
         public static event Action LateUpdateEvent;
-        public const int WAITTING_INTERVAL = 5;
-        private static NetworkMgr INSTANCE;
-        private const int DT = 17;
-        private const int LEAST_COMPARE_FRAME = 65;
-        private const string VERSION_CONTENT = "Version is old, please update.";
-        private const string FULL_CONTENT = "Quota is full, please retry.";
+        public static bool localFirst = true;
+        public const float STDDT = 0.017f;
 
-        public static bool Connect() {
-            return INSTANCE.client.Connect();
+        private const int DT = 17;
+        private const int WAITTING_INTERVAL = 5;
+        private static NetworkMgr INSTANCE;
+
+        public static int Frame {
+            get {
+                return INSTANCE.frame;
+            }
         }
 
-        public static bool Disconnect(byte exitCode=ExitCode.Normal) {
-            return INSTANCE.client.Disconnect(exitCode);
+        public static int PlayFrame {
+            get {
+                return INSTANCE.playFrame;
+            }
+        }
+
+        public static string Addr {
+            get {
+                return INSTANCE.addr;
+            }
+        }
+
+        public static void Send(string type, object data) {
+            INSTANCE.sendList.Add(new InputData() {
+                frame = INSTANCE.frame,
+                type = type,
+                data = data
+            });
+        }
+
+        public static void Disconnect() {
+            INSTANCE.client.Disconnect();
+        }
+
+        public static T DataToObject<T>(object data) {
+            T obj;
+
+            try {
+                obj = (T)data;
+            }
+            catch {
+                obj = JsonConvert.DeserializeObject<T>(data.ToString());
+            }
+
+            return obj;
         }
 
         [SerializeField]
@@ -34,20 +68,20 @@ namespace Game.Network {
         private int serverPort;
         [SerializeField]
         private int version;
+        private Client client;
+        private string addr;
+        private byte exitCode;
+        private bool online;
         private int updateTimer;
         private int frame;
         private int playFrame;
-        private List<PlayData> playDataList;
-        private Client client;
-        private bool online;
-        private string addr;
-        private byte exitCode;
-        private bool sendInLoop;
+        private List<InputData> sendList;
+        private PlayData playData;
 
         protected void Awake() {
             INSTANCE = this;
 
-            this.playDataList = new List<PlayData>();
+            this.sendList = new List<InputData>();
 
             this.client = new Client(this.serverAddress, this.serverPort);
             this.client.RegisterEvent(EventCode.Connect, this.OnConnect);
@@ -57,7 +91,7 @@ namespace Game.Network {
         }
 
         protected void Start() {
-            NetworkMgr.Connect();
+            this.client.Connect();
         }
 
         protected void Update() {
@@ -65,17 +99,6 @@ namespace Game.Network {
 
             while (this.updateTimer >= DT) {
                 this.client.Update();
-
-                if (this.playDataList.Count > 1) {
-                    var lateFrame = this.frame;
-                    this.sendInLoop = true;
-
-                    do {
-                        this.client.Update();
-                        this.LockUpdate(true);
-                    } while(this.playDataList.Count == 1 && this.frame == lateFrame);
-                }
-
                 this.LockUpdate();
                 this.updateTimer -= DT;
             }
@@ -88,9 +111,9 @@ namespace Game.Network {
                 this.exitCode = ExitCode.None;
             }
         }
-
-        private void LockUpdate(bool inLoop=false) {
-            if (this.online && this.frame + 1 == WAITTING_INTERVAL && this.playDataList.Count == 0) {
+        
+        private void LockUpdate() {
+            if (this.online && this.frame + 1 == WAITTING_INTERVAL && this.playData == null) {
                 return;
             }
 
@@ -98,56 +121,38 @@ namespace Game.Network {
                 this.frame++;
 
                 if (this.frame == WAITTING_INTERVAL) {
-                    var data = this.playDataList[0];
-                    this.playDataList.RemoveAt(0);
+                    var data = this.playData;
+                    this.playData = null;
                     
-                    if (data.addrs != null) {
+                    if (data.addrs != null && data.inputs != null) {
                         for (int i = 0; i < data.addrs.Length; i++) {
-                            ActorMgr.Input(data.addrs[i], data.inputs[i]);
+                            if (!NetworkMgr.localFirst || (NetworkMgr.localFirst && this.addr != data.addrs[i])) {
+                                ActorMgr.Input(data.addrs[i], data.inputs[i]);
+                            }
                         }
                     }
-
+                    
                     this.playFrame++;
                     this.frame = 0;
 
-                    if (!inLoop || (inLoop && this.sendInLoop)) {
-                        var input = new Datas.Input() {
-                            data = new InputData() {
-                                vertical = Input.GetAxis("Vertical"),
-                                horizontal = Input.GetAxis("Horizontal"),
-                                mouseX = Input.GetAxis("Mouse X"),
-                                fire = Input.GetKey(KeyCode.Mouse0)
-                            },
-                            frame = this.playFrame
-                        };
+                    this.client.Send(EventCode.Input, new Datas.Input() {
+                        inputs = this.sendList.ToArray(),
+                        playFrame = this.playFrame
+                    });
 
-                        this.sendInLoop = false;
-                        this.client.Send(EventCode.Input, input);
-                    }
-
-                    /*
-                    if (this.playFrame > LEAST_COMPARE_FRAME) {
-                        var comparison = new Datas.Comparison() {
-                            playFrame = this.playFrame,
-                            content = Judge.Comparison
-                        };
-
-                        this.client.Send(EventCode.Comparison, comparison);
-                    }
-                    */
+                    this.sendList.Clear();
                 }
 
                 NetworkMgr.UpdateEvent();
-                //NetworkMgr.LateUpdateEvent();
             }
         }
 
         private void OnConnect(byte id, string data) {
-            var obj = JsonUtility.FromJson<Datas.Connect>(data);
+            var obj = JsonConvert.DeserializeObject<Datas.Connect>(data);
 
             if (obj.version != this.version || obj.isFull) {
                 byte exitCode = obj.isFull ? ExitCode.Full : ExitCode.Version;
-                NetworkMgr.Disconnect(exitCode);
+                this.client.Disconnect(exitCode);
             }
             else {
                 this.client.Send(EventCode.Handshake, new Datas.Handshake() {
@@ -160,28 +165,30 @@ namespace Game.Network {
         }
 
         private void OnDisconnect(byte id, string data) {
-            var obj = JsonUtility.FromJson<Datas.Disconnect>(data);
+            var obj = JsonConvert.DeserializeObject<Datas.Disconnect>(data);
             this.exitCode = obj.exitCode;
         }
 
         private void OnStart(byte id, string data) {
-            var obj = JsonUtility.FromJson<Datas.Start>(data);
+            var obj = JsonConvert.DeserializeObject<Datas.Start>(data);
             Random.InitState(obj.seed);
-            
-            ActorMgr.Start(obj.leftAddr, obj.rightAddr, this.addr);
-            
+
+            var a = ActorMgr.NewShooter(obj.left.addr, obj.left.x, obj.left.y);
+            var b = ActorMgr.NewShooter(obj.right.addr, obj.right.x, obj.right.y);
+            var player = this.addr == obj.left.addr ? a : b;
+            ActorMgr.BindCamera(player.transform);
+
             this.online = true;
             this.updateTimer = 0;
             this.frame = 0;
             this.playFrame = 0;
             this.exitCode = ExitCode.None;
-            this.sendInLoop = false;
-            this.playDataList.Clear();
-            this.playDataList.Add(new PlayData());
+            this.sendList.Clear();
+            this.playData = new PlayData();
         }
 
         private void OnReceivePlayData(byte id, string data) {
-            this.playDataList.Add(JsonUtility.FromJson<PlayData>(data));
+            this.playData = JsonConvert.DeserializeObject<PlayData>(data);
         }
     }
 }

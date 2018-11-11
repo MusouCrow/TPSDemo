@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 namespace Game.Actor {
-    public class Shoting : Network.LockBehaviour {
+    public class Shooting : Network.LockBehaviour {
         public float power;
         public float speed;
         
