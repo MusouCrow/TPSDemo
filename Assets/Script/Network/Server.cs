@@ -6,6 +6,7 @@ using Random = UnityEngine.Random;
 
 namespace Game.Network {
     using Actor;
+    using Snapshots = Actor.Snapshots;
 
     public class Server : MonoBehaviour {
         [SerializeField]
@@ -20,6 +21,7 @@ namespace Game.Network {
                 NetworkServer.RegisterHandler(MsgType.Connect, this.OnClientConnected);
                 NetworkServer.RegisterHandler(MsgType.Disconnect, this.OnClientDisconnected);
                 NetworkServer.RegisterHandler(MsgTypes.Test, this.Test);
+                NetworkServer.RegisterHandler(MsgTypes.Sync, this.Sync);
 
                 print("Server Start");
             }
@@ -66,6 +68,12 @@ namespace Game.Network {
             var msg = new Msgs.Test();
             msg.Deserialize(netMsg.reader);
             print(msg.content);
+        }
+
+        private void Sync(NetworkMessage netMsg) {
+            var msg = new Msgs.Sync();
+            var test = msg.Deserialize<Snapshots.Test>(netMsg.reader);
+            print(test.content);
         }
     }
 }

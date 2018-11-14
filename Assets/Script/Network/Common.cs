@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -9,6 +10,7 @@ namespace Game.Network {
         public const short NewPlayer = 1002;
         public const short DelPlayer = 1003;
         public const short Start = 1004;
+        public const short Sync = 1005;
     }
 
     namespace Msgs {
@@ -73,6 +75,25 @@ namespace Game.Network {
                         position = reader.ReadVector3()
                     };
                 }
+            }
+        }
+
+        public class Sync : MessageBase {
+            public Snapshot snapshot;
+
+            public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.snapshot.frame);
+                writer.Write(this.snapshot.type);
+                this.snapshot.Serialize(writer);
+            }
+            
+            public T Deserialize<T>(NetworkReader reader) where T : Snapshot, new() {
+                this.snapshot = new T();
+                this.snapshot.frame = reader.ReadInt32();
+                this.snapshot.type = reader.ReadString();
+                this.snapshot.Deserialize(reader);
+
+                return this.snapshot as T;
             }
         }
     }

@@ -4,8 +4,15 @@ using UnityEngine.Networking;
 
 namespace Game.Network {
     using Actor;
+    using Snapshots = Actor.Snapshots;
 
     public class Client : MonoBehaviour {
+        private static Client INSTANCE;
+
+        public static void Send() {
+
+        }
+
         [SerializeField]
         private string address;
         [SerializeField]
@@ -13,6 +20,7 @@ namespace Game.Network {
         private NetworkClient client;
 
         protected void Start() {
+            INSTANCE = this;
             this.client = new NetworkClient();
 
             this.client.RegisterHandler(MsgType.Connect, this.OnConnected);
@@ -26,9 +34,14 @@ namespace Game.Network {
         
         protected void FixedUpdate() {
             if (Input.GetKeyDown(KeyCode.Space)) {
-                var msg = new Msgs.Test();
-                msg.content = "测试一下";
-                this.client.Send(MsgTypes.Test, msg);
+                var msg = new Msgs.Sync();
+                msg.snapshot = new Snapshots.Test() {
+                    frame = 1,
+                    type = "Test",
+                    content = "测试一下"
+                };
+
+                this.client.Send(MsgTypes.Sync, msg);
             }
         }
 
