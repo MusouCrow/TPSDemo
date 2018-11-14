@@ -1,39 +1,57 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
 
 namespace Game.Actor {
-    using Network;
-
     public static class ActorMgr {
-        private static GameObject shooterPrefab = Resources.Load("Prefab/Shooter") as GameObject;
-        
-        public static GameObject NewShooter(string addr, float x, float z) {
-            var obj = GameObject.Instantiate(ActorMgr.shooterPrefab, new Vector3(x, 0, z), Quaternion.identity);
-            obj.name = addr;
-            var identity = obj.GetComponent<Identity>();
-            identity.addr = addr;
+        private static GameObject playerPrefab = Resources.Load("Prefab/Shooter") as GameObject;
+        private static Dictionary<int, GameObject> playerMap = new Dictionary<int, GameObject>();
+
+        public static GameObject NewPlayer(int connectionId, Vector3 position, bool isLocal) {
+            var obj = GameObject.Instantiate(ActorMgr.playerPrefab, position, Quaternion.identity);
+            obj.name = connectionId.ToString();
+            obj.GetComponent<Identity>().connectionId = connectionId;
+            ActorMgr.playerMap.Add(connectionId, obj);
+            
+            if (isLocal) {
+                var camera = GameObject.FindWithTag("MainCamera");
+                var con = camera.GetComponent<ParentConstraint>();
+                var source = new ConstraintSource(){
+                    sourceTransform = obj.transform,
+                    weight = 1
+                };
+
+                con.translationOffsets = new Vector3[]{camera.transform.position};
+                con.rotationOffsets = new Vector3[]{camera.transform.rotation.eulerAngles};
+                con.AddSource(source);
+            }
 
             return obj;
         }
 
-        public static void BindCamera(Transform ts) {
-            var camera = GameObject.FindWithTag("MainCamera");
-            var con = camera.GetComponent<ParentConstraint>();
-            var source = new ConstraintSource(){
-                sourceTransform = ts,
-                weight = 1
-            };
+        public static bool DelPlayer(int connectionId) {
+            if (!ActorMgr.playerMap.ContainsKey(connectionId)) {
+                return false;
+            }
 
-            con.translationOffsets = new Vector3[]{camera.transform.position};
-            con.rotationOffsets = new Vector3[]{camera.transform.rotation.eulerAngles};
-            con.AddSource(source);
+            GameObject.Destroy(ActorMgr.playerMap[connectionId]);
+            ActorMgr.playerMap.Remove(connectionId);
+
+            return true;
         }
 
-        public static void Input(string addr, InputData[] datas) {
-            var obj = GameObject.Find(addr);
-            obj.GetComponent<Identity>().SetInputDatas(datas);
+        public static PlayerData[] ToPlayerDatas() {
+            var playerDatas = new PlayerData[ActorMgr.playerMap.Values.Count];
+            int i = 0;
+
+            foreach (var p in ActorMgr.playerMap.Values) {
+                playerDatas[i] = p.GetComponent<Identity>().ToPlayerData();
+                i++;
+            }
+
+            return playerDatas;
         }
     }
 }

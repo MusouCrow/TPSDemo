@@ -22,9 +22,7 @@ GameObject:
   - component: {fileID: 33165286509595032}
   - component: {fileID: 23600518392713456}
   - component: {fileID: 65112903953096622}
-  - component: {fileID: 114346151557691536}
-  - component: {fileID: 114936902208388852}
-  - component: {fileID: 114105908981371706}
+  - component: {fileID: 114059853153462914}
   m_Layer: 0
   m_Name: Shooter
   m_TagString: Untagged
@@ -99,7 +97,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &114105908981371706
+--- !u!114 &114059853153462914
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -107,32 +105,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 1329063165135308}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 109439dc03b624f47b69ea6bab03c423, type: 3}
+  m_Script: {fileID: 11500000, guid: f030c4cda1c1b4769803809b2c59158c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  orderType: 0
-  bullet: {fileID: 1357331329156334, guid: 73f280442909f4c0c806a344d3ec295b, type: 2}
---- !u!114 &114346151557691536
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1329063165135308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5bcf18c7ebf424591b8bebe5afe420b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  orderType: 0
---- !u!114 &114936902208388852
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1329063165135308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 040dcce3eaff84560b89e9fe31f85d4a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  orderType: 0

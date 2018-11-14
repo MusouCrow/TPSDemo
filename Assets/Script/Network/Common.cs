@@ -1,91 +1,79 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Game.Network {
-    [Serializable]
-    public struct InputData {
-        public int frame;
-        public string type;
-        public object data;
+    using Actor;
+
+    public class MsgTypes {
+        public const short Test = 1001;
+        public const short NewPlayer = 1002;
+        public const short DelPlayer = 1003;
+        public const short Start = 1004;
     }
 
-    [Serializable]
-    public class PlayData {
-        public string[] addrs;
-        public InputData[][] inputs;
-        public int playFrame;
-    }
+    namespace Msgs {
+        public class Test : MessageBase {
+            public string content;
 
-    public static class EventCode {
-        public const byte Disconnect = 0;
-        public const byte Connect = 1;
-        public const byte Heartbeat = 2;
-        public const byte Start = 3;
-        public const byte Input = 4;
-        public const byte Comparison = 5;
-        public const byte Handshake = 6;
-    }
-
-    public static class ExitCode {
-        public const byte None = 0;
-        public const byte Normal = 1;
-        public const byte Full = 2;
-        public const byte Version = 3;
-    }
-
-    namespace Datas {
-        [Serializable]
-        public struct Connect {
-            public string addr;
-            public int version;
-            public bool isFull;
-        }
-
-        [Serializable]
-        public struct Disconnect {
-            public byte exitCode;
-        }
-
-        [Serializable]
-        public struct Start {
-            [Serializable]
-            public struct Unit {
-                public float x;
-                public float y;
-                public string addr;
+            public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.content);
             }
 
-            public int seed;
-            public Unit left;
-            public Unit right;
+            public override void Deserialize(NetworkReader reader) {
+                this.content = reader.ReadString();
+            }
         }
 
-        [Serializable]
-        public struct Comparison {
-            public int playFrame;
-            public string content;
+        public class NewPlayer : MessageBase {
+            public int connectionId;
+            public Vector3 position;
+
+            public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.connectionId);
+                writer.Write(this.position);
+            }
+
+            public override void Deserialize(NetworkReader reader) {
+                this.connectionId = reader.ReadInt32();
+                this.position = reader.ReadVector3();
+            }
         }
 
-        [Serializable]
-        public struct Handshake {
-            public string deviceModel;
+        public class DelPlayer : MessageBase {
+            public int connectionId;
+
+            public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.connectionId);
+            }
+
+            public override void Deserialize(NetworkReader reader) {
+                this.connectionId = reader.ReadInt32();
+            }
         }
 
-        [Serializable]
-        public struct Input {
-            public InputData[] inputs;
-            public int playFrame;
-        }
+        public class Start : MessageBase {
+            public PlayerData[] playerDatas;
 
-        [Serializable]
-        public struct Move {
-            public float x;
-            public float z; 
-        }
+            public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.playerDatas.Length);
 
-        public struct Rotate {
-            public float value;
+                foreach (var p in this.playerDatas) {
+                    writer.Write(p.connectionId);
+                    writer.Write(p.position);
+                }
+            }
+
+            public override void Deserialize(NetworkReader reader) {
+                int length = reader.ReadInt32();
+                this.playerDatas = new PlayerData[length];
+
+                for (int i=0; i<length; i++) {
+                    this.playerDatas[i] = new PlayerData() {
+                        connectionId = reader.ReadInt32(),
+                        position = reader.ReadVector3()
+                    };
+                }
+            }
         }
     }
 }
