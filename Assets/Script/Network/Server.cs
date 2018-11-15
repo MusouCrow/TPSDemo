@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -13,6 +14,7 @@ namespace Game.Network {
         private int port;
         [SerializeField]
         private bool isPlayer;
+        private Dictionary<int, List<Snapshot>> snapshotListMap;
 
         protected void Start() {
             bool ret = NetworkServer.Listen(this.port);
@@ -20,8 +22,9 @@ namespace Game.Network {
             if (ret) {
                 NetworkServer.RegisterHandler(MsgType.Connect, this.OnClientConnected);
                 NetworkServer.RegisterHandler(MsgType.Disconnect, this.OnClientDisconnected);
-                NetworkServer.RegisterHandler(MsgTypes.Test, this.Test);
-                NetworkServer.RegisterHandler(MsgTypes.Sync, this.Sync);
+                NetworkServer.RegisterHandler(MsgTypes.Input, this.Input);
+
+                this.snapshotListMap = new Dictionary<int, List<Snapshot>>();
 
                 print("Server Start");
             }
@@ -70,10 +73,23 @@ namespace Game.Network {
             print(msg.content);
         }
 
-        private void Sync(NetworkMessage netMsg) {
-            var msg = new Msgs.Sync();
-            var test = msg.Deserialize<Snapshots.Test>(netMsg.reader);
-            print(test.content);
+        private void Input(NetworkMessage netMsg) {
+            var id = netMsg.conn.connectionId;
+
+            if (!this.snapshotListMap.ContainsKey(id)) {
+                this.snapshotListMap.Add(id, new List<Snapshot>());
+            }
+
+            var msg = new Msgs.Input() {
+                snapshotList = this.snapshotListMap[id]
+            };
+            msg.Deserialize(netMsg.reader);
+
+            foreach (var s in this.snapshotListMap[id]) {
+                print(s.frame + ", " + s.GetType().ToString());
+            }
+
+            this.snapshotListMap[id].Clear();
         }
     }
 }

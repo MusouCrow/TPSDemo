@@ -9,7 +9,6 @@ namespace Game.Actor {
 
     public class Snapshot {
         public int frame;
-        public string type;
 
         public virtual void Serialize(NetworkWriter writer) {}
         public virtual void Deserialize(NetworkReader reader) {}

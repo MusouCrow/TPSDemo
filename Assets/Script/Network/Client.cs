@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -9,8 +10,8 @@ namespace Game.Network {
     public class Client : MonoBehaviour {
         private static Client INSTANCE;
 
-        public static void Send() {
-
+        public static void Input(Snapshot snapshot) {
+            INSTANCE.snapshotList.Add(snapshot);
         }
 
         [SerializeField]
@@ -18,30 +19,40 @@ namespace Game.Network {
         [SerializeField]
         private int port;
         private NetworkClient client;
+        private List<Snapshot> snapshotList;
+        private int frameCount;
 
         protected void Start() {
             INSTANCE = this;
-            this.client = new NetworkClient();
 
+            this.snapshotList = new List<Snapshot>();
+
+            this.client = new NetworkClient();
             this.client.RegisterHandler(MsgType.Connect, this.OnConnected);
             this.client.RegisterHandler(MsgType.Disconnect, this.OnDisconnected);
             this.client.RegisterHandler(MsgTypes.NewPlayer, this.NewPlayer);
             this.client.RegisterHandler(MsgTypes.DelPlayer, this.DelPlayer);
             this.client.RegisterHandler(MsgTypes.Start, this.Start);
-
             this.client.Connect(this.address, this.port);
         }
-        
+
         protected void FixedUpdate() {
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                var msg = new Msgs.Sync();
-                msg.snapshot = new Snapshots.Test() {
-                    frame = 1,
-                    type = "Test",
+            this.frameCount++;
+
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
+                var snapshot = new Snapshots.Test() {
+                    frame = this.frameCount,
                     content = "测试一下"
                 };
+                Client.Input(snapshot);
+            }
 
-                this.client.Send(MsgTypes.Sync, msg);
+            if (this.frameCount % 5 == 0 && this.snapshotList.Count > 0) {
+                var msg = new Msgs.Input() {
+                    snapshotList = this.snapshotList
+                };
+                this.client.Send(MsgTypes.Input, msg);
+                this.snapshotList.Clear();
             }
         }
 

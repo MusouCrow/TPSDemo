@@ -1,4 +1,7 @@
 using System;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -10,7 +13,8 @@ namespace Game.Network {
         public const short NewPlayer = 1002;
         public const short DelPlayer = 1003;
         public const short Start = 1004;
-        public const short Sync = 1005;
+        public const short Input = 1005;
+        public const short Sync = 1006;
     }
 
     namespace Msgs {
@@ -78,23 +82,52 @@ namespace Game.Network {
             }
         }
 
-        public class Sync : MessageBase {
-            public Snapshot snapshot;
+        public class Input : MessageBase {
+            public List<Snapshot> snapshotList;
 
             public override void Serialize(NetworkWriter writer) {
-                writer.Write(this.snapshot.frame);
-                writer.Write(this.snapshot.type);
-                this.snapshot.Serialize(writer);
+                writer.Write(this.snapshotList.Count);
+
+                foreach (var s in this.snapshotList) {
+                    writer.Write(s.GetType().ToString());
+                    writer.Write(s.frame);
+                    s.Serialize(writer);
+                }
             }
             
-            public T Deserialize<T>(NetworkReader reader) where T : Snapshot, new() {
-                this.snapshot = new T();
-                this.snapshot.frame = reader.ReadInt32();
-                this.snapshot.type = reader.ReadString();
-                this.snapshot.Deserialize(reader);
-
-                return this.snapshot as T;
+            public override void Deserialize(NetworkReader reader) {
+                int length = reader.ReadInt32();
+                var assembly = Assembly.GetExecutingAssembly();
+                
+                for (int i=0; i < length; i++) {
+                    var type = reader.ReadString();
+                    var snapshot = assembly.CreateInstance(type) as Snapshot;
+                    snapshot.frame = reader.ReadInt32();
+                    snapshot.Deserialize(reader);
+                    this.snapshotList.Add(snapshot);
+                }
             }
         }
+        /*
+        public class Sync : MessageBase {
+            public Dictionary<int, List<Snapshot>> snapshotListMap;
+
+            public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.snapshotListMap.Count);
+
+                foreach (var sl in this.snapshotListMap) {
+                    writer.Write(sl.Key);
+                    
+                    foreach (var s in sl.Value) {
+                        writer.Write(s.frame);
+                        s.Serialize(writer);
+                    }
+                }
+            }
+
+            public void Deserialize<T>(NetworkReader reader) where T : Snapshot, new() {
+
+            }
+        } */
     }
 }
