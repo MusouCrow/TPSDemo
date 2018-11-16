@@ -10,12 +10,14 @@ namespace Game.Network {
     using Snapshots = Actor.Snapshots;
 
     public class Server : MonoBehaviour {
+        private const int INTERVAL = 10;
+
         [SerializeField]
         private int port;
-        [SerializeField]
-        private bool isPlayer;
         private Dictionary<int, List<Snapshot>> snapshotListMap;
-
+        private List<List<Snapshot>> syncList;
+        private int frameCount;
+        
         protected void Start() {
             bool ret = NetworkServer.Listen(this.port);
 
@@ -25,6 +27,7 @@ namespace Game.Network {
                 NetworkServer.RegisterHandler(MsgTypes.Input, this.Input);
 
                 this.snapshotListMap = new Dictionary<int, List<Snapshot>>();
+                this.syncList = new List<List<Snapshot>>();
 
                 print("Server Start");
             }
@@ -33,8 +36,39 @@ namespace Game.Network {
             }
         }
 
+        protected void FixedUpdate() {
+            this.frameCount++;
+            var list = new List<Snapshot>();
+            
+            foreach (var sl in this.snapshotListMap) {
+                int frame = -1;
+
+                while (sl.Value.Count > 0 && (frame == -1 || sl.Value[0].frame == frame)) {
+                    var s = sl.Value[0];
+
+                    s.connectionId = sl.Key;
+                    frame = s.frame;
+                    list.Add(s);
+                    sl.Value.RemoveAt(0);
+                }
+            }
+
+            if (list.Count > 0) {
+                this.syncList.Add(list);
+                Client.SyncList.Add(list);
+            }
+
+            if (this.frameCount % Server.INTERVAL == 0) {
+                NetworkServer.SendToAll(MsgTypes.Sync, new Msgs.Sync() {
+                    snapshotsList = this.syncList
+                });
+
+                this.syncList.Clear();
+            }
+        }
+
         private void OnClientConnected(NetworkMessage netMsg) {
-            if (!this.isPlayer && NetworkServer.connections[1] == netMsg.conn) {
+            if (Client.Type == EndPortType.Server && NetworkServer.connections[1] == netMsg.conn) {
                 return;
             }
 
@@ -84,12 +118,6 @@ namespace Game.Network {
                 snapshotList = this.snapshotListMap[id]
             };
             msg.Deserialize(netMsg.reader);
-
-            foreach (var s in this.snapshotListMap[id]) {
-                print(s.frame + ", " + s.GetType().ToString());
-            }
-
-            this.snapshotListMap[id].Clear();
         }
     }
 }

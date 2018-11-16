@@ -9,22 +9,25 @@ namespace Game.Actor {
 
     public class Snapshot {
         public int frame;
+        public int connectionId;
 
-        public virtual void Serialize(NetworkWriter writer) {}
-        public virtual void Deserialize(NetworkReader reader) {}
+        public virtual void Serialize(NetworkWriter writer, bool isFull) {}
+        public virtual void Deserialize(NetworkReader reader, bool isFull) {}
     }
 
     namespace Snapshots {
         public class Test : Snapshot {
             public string content;
 
-            public override void Serialize(NetworkWriter writer) {
+            public override void Serialize(NetworkWriter writer, bool isFull) {
                 writer.Write(this.content);
             }
 
-            public override void Deserialize(NetworkReader reader) {
+            public override void Deserialize(NetworkReader reader, bool isFull) {
                 this.content = reader.ReadString();
             }
         }
+
+        public class ChangeColor : Snapshot {}
     }
 }

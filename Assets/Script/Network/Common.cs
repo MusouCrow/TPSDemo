@@ -8,6 +8,8 @@ using UnityEngine.Networking;
 namespace Game.Network {
     using Actor;
 
+    public enum EndPortType {Client, Server, Host}
+
     public class MsgTypes {
         public const short Test = 1001;
         public const short NewPlayer = 1002;
@@ -91,7 +93,7 @@ namespace Game.Network {
                 foreach (var s in this.snapshotList) {
                     writer.Write(s.GetType().ToString());
                     writer.Write(s.frame);
-                    s.Serialize(writer);
+                    s.Serialize(writer, false);
                 }
             }
             
@@ -103,31 +105,47 @@ namespace Game.Network {
                     var type = reader.ReadString();
                     var snapshot = assembly.CreateInstance(type) as Snapshot;
                     snapshot.frame = reader.ReadInt32();
-                    snapshot.Deserialize(reader);
+                    snapshot.Deserialize(reader, false);
                     this.snapshotList.Add(snapshot);
                 }
             }
         }
-        /*
+        
         public class Sync : MessageBase {
-            public Dictionary<int, List<Snapshot>> snapshotListMap;
+            public List<List<Snapshot>> snapshotsList;
 
             public override void Serialize(NetworkWriter writer) {
-                writer.Write(this.snapshotListMap.Count);
+                writer.Write(this.snapshotsList.Count);
 
-                foreach (var sl in this.snapshotListMap) {
-                    writer.Write(sl.Key);
-                    
-                    foreach (var s in sl.Value) {
+                foreach (var sl in this.snapshotsList) {
+                    writer.Write(sl.Count);
+
+                    foreach (var s in sl) {
                         writer.Write(s.frame);
-                        s.Serialize(writer);
+                        writer.Write(s.connectionId);
+                        s.Serialize(writer, true);
                     }
                 }
             }
 
-            public void Deserialize<T>(NetworkReader reader) where T : Snapshot, new() {
+            public override void Deserialize(NetworkReader reader) {
+                int length = reader.ReadInt32();
 
+                for (int i = 0; i < length; i++) {
+                    var list = new List<Snapshot>();
+                    int len = reader.ReadInt32();
+
+                    for (int j = 0; j < len; j++) {
+                        var snapshot = new Snapshot();
+                        snapshot.frame = reader.ReadInt32();
+                        snapshot.connectionId = reader.ReadInt32();
+                        snapshot.Deserialize(reader, true);
+                        list.Add(snapshot);
+                    }
+                    
+                    this.snapshotsList.Add(list);
+                }
             }
-        } */
+        }
     }
 }
