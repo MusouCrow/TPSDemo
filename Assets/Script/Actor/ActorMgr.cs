@@ -58,5 +58,9 @@ namespace Game.Actor {
             var identity = ActorMgr.playerMap[snapshot.connectionId].GetComponent<Identity>();
             identity.RunEvent(snapshot);
         }
+
+        public static GameObject GetPlayer(int connectionId) {
+            return ActorMgr.playerMap[connectionId];
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace Game.Actor {
 
         private void ChangeColor(Snapshot snapshot) {
             var changeColor = snapshot as Snapshots.ChangeColor;
-            this.renderer.material.color = this.renderer.material.color == Color.white ? Color.black : Color.white;
+            this.renderer.material.color = changeColor.isWhite ? Color.black : Color.white;
             //print(Client.FrameCount);
         }
     }

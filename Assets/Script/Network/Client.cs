@@ -44,6 +44,18 @@ namespace Game.Network {
             }
         }
 
+        private static void Resolve(GameObject gameObject, List<Snapshot> list, int index) {
+            for (int i = index; i < list.Count; i++) {
+                list[i].Resolve(gameObject);
+                
+                if (i < list.Count - 1 && list[i].frame != list[i + 1].frame) {
+                    gameObject.SendMessage("FixedUpdate");
+                }
+            }
+
+            gameObject.SendMessage("FixedUpdate");
+        }
+
         [SerializeField]
         private string address;
         [SerializeField]
@@ -146,9 +158,51 @@ namespace Game.Network {
             msg.snapshotsList = this.syncList;
             msg.Deserialize(netMsg.reader);
 
+            var list = new List<Snapshot>();
+
             foreach (var sl in this.syncList) {
-                
+                bool hasAdded = false;
+
+                foreach (var s in sl) {
+                    if (this.connectionId == s.connectionId) {
+                        list.Add(s);
+                        hasAdded = true;
+                    }
+                    else if (hasAdded) {
+                        break;
+                    }
+                }
             }
+            
+            int index = list.Count;
+
+            for (int i = 0; i < list.Count; i++) {
+                if (!list[i].Equals(this.checkList[i])) {
+                    index = i;
+                    print(i);
+                    break;
+                }
+            }
+
+            this.checkList.RemoveRange(0, list.Count);
+
+            /*
+            if (index == list.Count) {
+                this.checkList.Clear();
+            }
+            else {
+                var player = ActorMgr.GetPlayer(this.connectionId);
+                var frame = list[list.Count - 1].frame;
+
+                for (int i = this.checkList.Count - 1; i >= 0; i--) {
+                    if (this.checkList[i].frame <= frame) {
+                        this.checkList.RemoveAt(i);
+                    }
+                }
+
+                Client.Resolve(player, list, index);
+                Client.Resolve(player, this.checkList, 0);
+            } */
         }
     }
 }

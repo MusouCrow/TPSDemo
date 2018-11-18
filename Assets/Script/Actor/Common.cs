@@ -13,6 +13,10 @@ namespace Game.Actor {
 
         public virtual void Serialize(NetworkWriter writer, bool isFull) {}
         public virtual void Deserialize(NetworkReader reader, bool isFull) {}
+        public virtual void Resolve(GameObject gameObject) {}
+        public virtual bool Equals(Snapshot obj) {
+            return this.frame == obj.frame;
+        }
     }
 
     namespace Snapshots {
@@ -41,6 +45,16 @@ namespace Game.Actor {
                 if (isFull) {
                     this.isWhite = reader.ReadBoolean();
                 }
+            }
+
+            public override bool Equals(Snapshot obj) {
+                var o = obj as ChangeColor;
+
+                if (o == null) {
+                    return false;
+                }
+
+                return base.Equals(obj) && this.isWhite == o.isWhite;
             }
         }
     }
