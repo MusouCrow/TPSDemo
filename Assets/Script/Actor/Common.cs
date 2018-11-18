@@ -28,6 +28,20 @@ namespace Game.Actor {
             }
         }
 
-        public class ChangeColor : Snapshot {}
+        public class ChangeColor : Snapshot {
+            public bool isWhite;
+
+            public override void Serialize(NetworkWriter writer, bool isFull) {
+                if (isFull) {
+                    writer.Write(this.isWhite);
+                }
+            }
+
+            public override void Deserialize(NetworkReader reader, bool isFull) {
+                if (isFull) {
+                    this.isWhite = reader.ReadBoolean();
+                }
+            }
+        }
     }
 }

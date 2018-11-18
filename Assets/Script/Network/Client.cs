@@ -12,7 +12,12 @@ namespace Game.Network {
         private const int INTERVAL = 5;
 
         public static void Input(Snapshot snapshot) {
+            snapshot.frame = Client.FrameCount;
             INSTANCE.sendList.Add(snapshot);
+
+            if (!NetworkServer.active) {
+                INSTANCE.checkList.Add(snapshot);
+            }
         }
 
         public static List<List<Snapshot>> SyncList {
@@ -21,9 +26,9 @@ namespace Game.Network {
             }
         }
 
-        public static EndPortType Type {
+        public static bool IsPlayer {
             get {
-                return INSTANCE.type;
+                return INSTANCE.isPlayer;
             }
         }
 
@@ -33,21 +38,30 @@ namespace Game.Network {
             }
         }
 
+        public static int ConnectionId {
+            get {
+                return INSTANCE.connectionId;
+            }
+        }
+
         [SerializeField]
         private string address;
         [SerializeField]
         private int port;
         [SerializeField]
-        private EndPortType type;
+        private bool isPlayer;
         private NetworkClient client;
         private List<Snapshot> sendList;
+        private List<Snapshot> checkList;
         private List<List<Snapshot>> syncList;
         private int frameCount;
+        private int connectionId;
 
         protected void Start() {
             INSTANCE = this;
 
             this.sendList = new List<Snapshot>();
+            this.checkList = new List<Snapshot>();
             this.syncList = new List<List<Snapshot>>();
 
             this.client = new NetworkClient();
@@ -66,16 +80,19 @@ namespace Game.Network {
             }
             
             if (this.sendList.Count == 0 || this.sendList[this.sendList.Count - 1].frame != this.frameCount) {
-                this.sendList.Add(new Snapshot() {frame = this.frameCount});
+                Client.Input(new Snapshot());
             }
             
             this.frameCount++;
 
             if (this.syncList.Count > 0) {
                 foreach (var s in this.syncList[0]) {
-                    ActorMgr.Input(s);
+                    if (s.connectionId != this.connectionId) {
+                        ActorMgr.Input(s);
+                    }
                 }
                 this.syncList.RemoveAt(0);
+                //print(this.syncList.Count);
             }
 
             if (this.frameCount % Client.INTERVAL == 0) {
@@ -113,19 +130,25 @@ namespace Game.Network {
             var msg = new Msgs.Start();
             msg.Deserialize(netMsg.reader);
 
+            this.connectionId = msg.connectionId;
+
             foreach (var p in msg.playerDatas) {
                 ActorMgr.NewPlayer(p.connectionId, p.position, false);
             }
         }
 
         private void Sync(NetworkMessage netMsg) {
-            if (this.type != EndPortType.Client) {
+            if (NetworkServer.active) {
                 return;
             }
 
             var msg = new Msgs.Sync();
             msg.snapshotsList = this.syncList;
             msg.Deserialize(netMsg.reader);
+
+            foreach (var sl in this.syncList) {
+                
+            }
         }
     }
 }

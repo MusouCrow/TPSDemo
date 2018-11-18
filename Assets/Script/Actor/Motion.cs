@@ -6,27 +6,29 @@ namespace Game.Actor {
 
     public class Motion : MonoBehaviour {
         private new Renderer renderer;
+        private Identity identity;
 
         protected void Start() {
             this.renderer = this.GetComponent<Renderer>();    
 
-            var identity = this.GetComponent<Identity>();
-            identity.BindEvent(typeof(Snapshots.ChangeColor), this.ChangeColor);
+            this.identity = this.GetComponent<Identity>();
+            this.identity.BindEvent(typeof(Snapshots.ChangeColor), this.ChangeColor);
         }
 
         protected void FixedUpdate() {
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                var color = this.renderer.material.color == Color.white ? Color.black : Color.white;
-                var snapshot = new Snapshots.ChangeColor();
-                Client.Input(snapshot);
-                print(Client.FrameCount);
+            if (this.identity.IsPlayer && Input.GetKeyDown(KeyCode.Space)) {
+                var snapshot = new Snapshots.ChangeColor() {
+                    isWhite = this.renderer.material.color == Color.white
+                };
+                this.identity.Input(snapshot);
+                //print(Client.FrameCount);
             }
         }
 
         private void ChangeColor(Snapshot snapshot) {
-            var color = snapshot as Snapshots.ChangeColor;
+            var changeColor = snapshot as Snapshots.ChangeColor;
             this.renderer.material.color = this.renderer.material.color == Color.white ? Color.black : Color.white;
-            print(Client.FrameCount);
+            //print(Client.FrameCount);
         }
     }
 }

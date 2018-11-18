@@ -8,8 +8,6 @@ using UnityEngine.Networking;
 namespace Game.Network {
     using Actor;
 
-    public enum EndPortType {Client, Server, Host}
-
     public class MsgTypes {
         public const short Test = 1001;
         public const short NewPlayer = 1002;
@@ -61,8 +59,10 @@ namespace Game.Network {
 
         public class Start : MessageBase {
             public PlayerData[] playerDatas;
+            public int connectionId;
 
             public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.connectionId);
                 writer.Write(this.playerDatas.Length);
 
                 foreach (var p in this.playerDatas) {
@@ -72,6 +72,8 @@ namespace Game.Network {
             }
 
             public override void Deserialize(NetworkReader reader) {
+                this.connectionId = reader.ReadInt32();
+
                 int length = reader.ReadInt32();
                 this.playerDatas = new PlayerData[length];
 
@@ -121,6 +123,7 @@ namespace Game.Network {
                     writer.Write(sl.Count);
 
                     foreach (var s in sl) {
+                        writer.Write(s.GetType().ToString());
                         writer.Write(s.frame);
                         writer.Write(s.connectionId);
                         s.Serialize(writer, true);
@@ -130,13 +133,15 @@ namespace Game.Network {
 
             public override void Deserialize(NetworkReader reader) {
                 int length = reader.ReadInt32();
+                var assembly = Assembly.GetExecutingAssembly();
 
                 for (int i = 0; i < length; i++) {
                     var list = new List<Snapshot>();
                     int len = reader.ReadInt32();
 
                     for (int j = 0; j < len; j++) {
-                        var snapshot = new Snapshot();
+                        var type = reader.ReadString();
+                        var snapshot = assembly.CreateInstance(type) as Snapshot;
                         snapshot.frame = reader.ReadInt32();
                         snapshot.connectionId = reader.ReadInt32();
                         snapshot.Deserialize(reader, true);

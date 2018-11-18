@@ -155,7 +155,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   address: localhost
   port: 8888
-  type: 2
+  isPlayer: 1
 --- !u!4 &44049224
 Transform:
   m_ObjectHideFlags: 0

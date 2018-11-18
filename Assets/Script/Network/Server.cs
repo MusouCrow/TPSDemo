@@ -20,7 +20,7 @@ namespace Game.Network {
         
         protected void Start() {
             bool ret = NetworkServer.Listen(this.port);
-
+            
             if (ret) {
                 NetworkServer.RegisterHandler(MsgType.Connect, this.OnClientConnected);
                 NetworkServer.RegisterHandler(MsgType.Disconnect, this.OnClientDisconnected);
@@ -68,14 +68,15 @@ namespace Game.Network {
         }
 
         private void OnClientConnected(NetworkMessage netMsg) {
-            if (Client.Type == EndPortType.Server && NetworkServer.connections[1] == netMsg.conn) {
+            if (!Client.IsPlayer && NetworkServer.connections[1] == netMsg.conn) {
                 return;
             }
 
             {
-                var msg = new Msgs.Start();
-                msg.playerDatas = ActorMgr.ToPlayerDatas();
-
+                var msg = new Msgs.Start() {
+                    playerDatas = ActorMgr.ToPlayerDatas(),
+                    connectionId = netMsg.conn.connectionId
+                };
                 NetworkServer.SendToClient(netMsg.conn.connectionId, MsgTypes.Start, msg);
             }
 
