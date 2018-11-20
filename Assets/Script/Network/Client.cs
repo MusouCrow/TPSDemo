@@ -41,6 +41,7 @@ namespace Game.Network {
             }
 
             this.updateTime += dt;
+            this.heartbeatTimer.Update(dt);
             this.connection.Update(this.ToKCPClock());
         }
 
@@ -69,6 +70,17 @@ namespace Game.Network {
             }
             catch (SocketException) {
                 this.Close();
+            }
+        }
+
+        protected override void HeartbeatTick() {
+            if (!this.connection.heartbeat) {
+                this.Close();
+            }
+            else {
+                this.Send(MsgId.Heartbeat);
+                this.connection.heartbeat = false;
+                this.heartbeatTimer.Enter();
             }
         }
     }

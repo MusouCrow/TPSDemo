@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70de6dc470b35497c908de1314da5027, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  address: localhost
+  address: 127.0.0.1
   port: 8888
 --- !u!4 &44049224
 Transform:

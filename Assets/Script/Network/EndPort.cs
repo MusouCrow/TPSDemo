@@ -6,11 +6,15 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Game.Network {
+    using Utility;
+
     public abstract class EndPort {
         protected static IPEndPoint EP;
+        private const float HEARTBEAT_INTERVAL = 3;
 
         protected UdpClient udp;
         protected float updateTime;
+        protected Timer heartbeatTimer;
         private Dictionary<byte, Action<byte, NetworkReader, IPEndPoint>> handlerMap;
 
         public bool Active {
@@ -20,6 +24,7 @@ namespace Game.Network {
 
         public EndPort() {
             this.handlerMap = new Dictionary<byte, Action<byte, NetworkReader, IPEndPoint>>();
+            this.heartbeatTimer = new Timer(HEARTBEAT_INTERVAL, this.HeartbeatTick);
         }
 
         protected bool Init() {
@@ -29,6 +34,7 @@ namespace Game.Network {
 
             this.updateTime = 0;
             this.Active = true;
+            this.heartbeatTimer.Enter();
 
             return true;
         }
@@ -97,5 +103,7 @@ namespace Game.Network {
         protected void SendCallback(IAsyncResult ar) {
             this.udp.EndSend(ar);
         }
+
+        protected abstract void HeartbeatTick();
     }
 }

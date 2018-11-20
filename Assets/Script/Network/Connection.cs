@@ -6,6 +6,7 @@ namespace Game.Network {
         private KCP kcp;
         private Action<byte, byte[]> Handle;
 
+        public bool heartbeat;
         public IPEndPoint EndPoint {
             private set;
             get;
@@ -13,6 +14,7 @@ namespace Game.Network {
 
         public Connection(IPEndPoint endPoint, Action<IPEndPoint, byte[], int> Send, Action<IPEndPoint, byte, byte[]> Handle) {
             this.EndPoint = endPoint;
+            this.heartbeat = true;
             
             this.kcp = new KCP(1, (byte[] buffer, int size) => Send(this.EndPoint, buffer, size));
             this.kcp.NoDelay(1, 10, 2, 1);
@@ -45,6 +47,7 @@ namespace Game.Network {
         }
 
         public void Input(byte[] buffer) {
+            this.heartbeat = true;
             this.kcp.Input(buffer);
         }
     }

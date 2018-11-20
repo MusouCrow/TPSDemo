@@ -9,10 +9,14 @@ namespace Game.Network {
     public class Server : EndPort {
         private Dictionary<string, Connection> connectionMap;
 
+        public Server() : base() {
+            this.connectionMap = new Dictionary<string, Connection>();
+            this.RegisterHandler(MsgId.Heartbeat, this.Heartbeat);
+        }
+
         public bool Listen(int port) {
             if (base.Init()) {
                 this.udp = new UdpClient(port);
-                this.connectionMap = new Dictionary<string, Connection>();
                 this.Receive();
 
                 return true;
@@ -27,6 +31,7 @@ namespace Game.Network {
             }
 
             this.updateTime += dt;
+            this.heartbeatTimer.Update(dt);
             var clock = this.ToKCPClock();
             
             foreach (var c in this.connectionMap) {
@@ -66,6 +71,30 @@ namespace Game.Network {
             }
 
             this.Receive();
+        }
+
+        protected override void HeartbeatTick() {
+            var removeList = new List<string>();
+            
+            foreach (var c in this.connectionMap) {
+                if (!c.Value.heartbeat) {
+                    removeList.Add(c.Key);
+                }
+                else {
+                    c.Value.heartbeat = false;
+                }
+            }
+
+            foreach (var k in removeList) {
+                this.connectionMap.Remove(k);
+            }
+
+            this.heartbeatTimer.Enter();
+        }
+
+        private void Heartbeat(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            this.Send(ep, MsgId.Heartbeat);
+            Debug.Log("Server Heartbeat " + ep.ToString());
         }
     }
 }

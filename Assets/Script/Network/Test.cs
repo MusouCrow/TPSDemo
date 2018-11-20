@@ -18,7 +18,11 @@ namespace Game.Network {
             this.client = new Client();
 
             this.server.RegisterHandler(MsgId.Connect, this.NewConnection);
+            this.server.RegisterHandler(MsgId.Disconnect, this.DelConnection);
+
             this.client.RegisterHandler(MsgId.Connect, this.ClientConnected);
+            this.client.RegisterHandler(MsgId.Disconnect, this.ClientDisconnected);
+            this.client.RegisterHandler(MsgId.Heartbeat, this.ClientHeartbeat);
 
             this.server.Listen(this.port);
             this.client.Connect(this.address, this.port);
@@ -35,8 +39,20 @@ namespace Game.Network {
             this.server.Send(ep, MsgId.Connect);
         }
 
+        private void DelConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            print("Del Client: " + ep.ToString());
+        }
+
         private void ClientConnected(byte msgId, NetworkReader reader, IPEndPoint ep) {
             print("Client Connected");
+        }
+
+        private void ClientDisconnected(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            print("Client Disconnected");
+        }
+
+        private void ClientHeartbeat(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            print("Client Heartbeat");
         }
     }
 }
