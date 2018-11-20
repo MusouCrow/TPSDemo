@@ -6,139 +6,69 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Game.Network {
-    public class Client {
-        private static IPEndPoint EP;
+    public class Client : EndPort {
+        private Connection connection;
 
-        private UdpClient udp;
-        private KCP kcp;
-        private float updateTime;
-        private Dictionary<byte, Action<byte, NetworkReader>> handlerMap;
+        public bool Connect(string address, int port) {
+            if (base.Init()) {
+                this.udp = new UdpClient();
 
-        public bool Connected {
-            get;
-            private set;
+                var ipEndPoint = new IPEndPoint(Dns.GetHostAddresses(address)[0], port);
+                this.connection = new Connection(ipEndPoint, this.SendWrap, this.Handle);
+                
+                this.Send(MsgId.Connect);
+                this.Receive();
+
+                return true;
+            }
+
+            return false;
         }
 
-        public Client() {
-            this.handlerMap = new Dictionary<byte, Action<byte, NetworkReader>>();
+        public override bool Close() {
+            if (base.Close()) {
+                this.Handle(null, MsgId.Disconnect, null);
+
+                return true;
+            }
+
+            return false;
         }
 
-        public void Update(float dt) {
-            if (!this.Connected) {
+        public override void Update(float dt) {
+            if (!this.Active) {
                 return;
             }
 
             this.updateTime += dt;
-            this.kcp.Update((uint)Mathf.FloorToInt(this.updateTime * 1000));
-
-            for (var size = this.kcp.PeekSize(); size > 0; size = this.kcp.PeekSize()) {
-                var buffer = new byte[size];
-
-                if (this.kcp.Recv(buffer) > 0) {
-                    byte id = buffer[0];
-                    byte[] data = new byte[buffer.Length - 1];
-
-                    for (int i = 0; i < data.Length; i++) {
-                        data[i] = buffer[i + 1];
-                    }
-
-                    this.Handle(id, data);
-                }
-            }
-        }
-
-        public bool Connect(string address, int port) {
-            if (this.Connected) {
-                return false;
-            }
-
-            this.udp = new UdpClient(address, port);
-            this.kcp = new KCP(1, this.SendWrap);
-            this.kcp.NoDelay(1, 10, 2, 1);
-            this.kcp.WndSize(128, 128);
-            this.Send(MsgId.Connect);
-            this.Receive();
-            this.updateTime = 0;
-            this.Connected = true;
-
-            return true;
-        }
-
-        public bool Disconnect() {
-            if (!this.Connected) {
-                return false;
-            }
-
-            this.Connected = false;
-            this.udp.Close();
-            this.Handle(MsgId.Disconnect, null);
-
-            return true;
+            this.connection.Update(this.ToKCPClock());
         }
 
         public void Send(byte id, MessageBase message=null) {
-            byte[] buffer;
-
-            if (message != null) {
-                var writer = new NetworkWriter();
-                message.Serialize(writer);
-
-                var data = writer.AsArray();
-                buffer = new byte[data.Length + 1];
-                buffer[0] = id;
-
-                for (int i = 0; i < data.Length; i++) {
-                    buffer[i + 1] = data[i];
-                }
-            }
-            else {
-                buffer = new byte[] {id};
-            }
-
-            this.kcp.Send(buffer);
+            base.Send(this.connection, id, message);
         }
 
-        public void RegisterHandler(byte id, Action<byte, NetworkReader> Func) {
-            this.handlerMap.Add(id, Func);
-        }
-
-        private void Handle(byte id, byte[] data) {
-            var reader = new NetworkReader(data);
-
-            if (this.handlerMap.ContainsKey(id)) {
-                this.handlerMap[id](id, reader);
-            }
-        }
-
-        private void Receive() {
-            this.udp.BeginReceive(this.ReceiveCallback, null);
-        }
-
-        private void ReceiveCallback(IAsyncResult ar) {
+        protected override void SendWrap(IPEndPoint ep, byte[] buffer, int size) {
             try {
-                var data = this.udp.EndReceive(ar, ref EP);
+                base.SendWrap(ep, buffer, size);
+            }
+            catch (SocketException) {
+                this.Close();
+            }
+        }
 
-                if (data != null) {
-                    this.kcp.Input(data);
+        protected override void ReceiveCallback(IAsyncResult ar) {
+            try {
+                var buffer = this.udp.EndReceive(ar, ref EP);
+
+                if (buffer != null) {
+                    this.connection.Input(buffer);
                 }
 
                 this.Receive();
             }
             catch (SocketException) {
-                this.Disconnect();
-            }
-        }
-
-        private void SendCallback(IAsyncResult ar) {
-            this.udp.EndSend(ar);
-        }
-
-        private void SendWrap(byte[] data, int size) {
-            try {
-                this.udp.BeginSend(data, size, this.SendCallback, null);
-            }
-            catch (SocketException) {
-                this.Disconnect();
+                this.Close();
             }
         }
     }
