@@ -1,208 +1,145 @@
 using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Game.Network {
-    using Actor;
-    using Snapshots = Actor.Snapshots;
+    public class Client {
+        private static IPEndPoint EP;
 
-    public class Client : MonoBehaviour {
-        private static Client INSTANCE;
-        private const int INTERVAL = 5;
+        private UdpClient udp;
+        private KCP kcp;
+        private float updateTime;
+        private Dictionary<byte, Action<byte, NetworkReader>> handlerMap;
 
-        public static void Input(Snapshot snapshot) {
-            snapshot.frame = Client.FrameCount;
-            INSTANCE.sendList.Add(snapshot);
-
-            if (!NetworkServer.active) {
-                INSTANCE.checkList.Add(snapshot);
-            }
+        public bool Connected {
+            get;
+            private set;
         }
 
-        public static List<List<Snapshot>> SyncList {
-            get {
-                return INSTANCE.syncList;
-            }
+        public Client() {
+            this.handlerMap = new Dictionary<byte, Action<byte, NetworkReader>>();
         }
 
-        public static bool IsPlayer {
-            get {
-                return INSTANCE.isPlayer;
-            }
-        }
-
-        public static int FrameCount {
-            get {
-                return INSTANCE.frameCount;
-            }
-        }
-
-        public static int ConnectionId {
-            get {
-                return INSTANCE.connectionId;
-            }
-        }
-
-        private static void Resolve(GameObject gameObject, List<Snapshot> list, int index) {
-            for (int i = index; i < list.Count; i++) {
-                list[i].Resolve(gameObject);
-                
-                if (i < list.Count - 1 && list[i].frame != list[i + 1].frame) {
-                    gameObject.SendMessage("FixedUpdate");
-                }
-            }
-
-            gameObject.SendMessage("FixedUpdate");
-        }
-
-        [SerializeField]
-        private string address;
-        [SerializeField]
-        private int port;
-        [SerializeField]
-        private bool isPlayer;
-        private NetworkClient client;
-        private List<Snapshot> sendList;
-        private List<Snapshot> checkList;
-        private List<List<Snapshot>> syncList;
-        private int frameCount;
-        private int connectionId;
-
-        protected void Start() {
-            INSTANCE = this;
-
-            this.sendList = new List<Snapshot>();
-            this.checkList = new List<Snapshot>();
-            this.syncList = new List<List<Snapshot>>();
-
-            this.client = new NetworkClient();
-            this.client.RegisterHandler(MsgType.Connect, this.OnConnected);
-            this.client.RegisterHandler(MsgType.Disconnect, this.OnDisconnected);
-            this.client.RegisterHandler(MsgTypes.NewPlayer, this.NewPlayer);
-            this.client.RegisterHandler(MsgTypes.DelPlayer, this.DelPlayer);
-            this.client.RegisterHandler(MsgTypes.Start, this.Start);
-            this.client.RegisterHandler(MsgTypes.Sync, this.Sync);
-            this.client.Connect(this.address, this.port);
-        }
-
-        protected void FixedUpdate() {
-            if (!this.client.isConnected) {
-                return;
-            }
-            
-            if (this.sendList.Count == 0 || this.sendList[this.sendList.Count - 1].frame != this.frameCount) {
-                Client.Input(new Snapshot());
-            }
-            
-            this.frameCount++;
-
-            if (this.syncList.Count > 0) {
-                foreach (var s in this.syncList[0]) {
-                    if (s.connectionId != this.connectionId) {
-                        ActorMgr.Input(s);
-                    }
-                }
-                this.syncList.RemoveAt(0);
-                //print(this.syncList.Count);
-            }
-
-            if (this.frameCount % Client.INTERVAL == 0) {
-                var msg = new Msgs.Input() {
-                    snapshotList = this.sendList
-                };
-                this.client.Send(MsgTypes.Input, msg);
-                this.sendList.Clear();
-            }
-        }
-
-        private void OnConnected(NetworkMessage netMsg) {
-            print("Connected");
-        }
-
-        private void OnDisconnected(NetworkMessage netMsg) {
-            print("Disconnected");
-        }
-
-        private void NewPlayer(NetworkMessage netMsg) {
-            var msg = new Msgs.NewPlayer();
-            msg.Deserialize(netMsg.reader);
-
-            ActorMgr.NewPlayer(msg.connectionId, msg.position, this.client.connection.connectionId == msg.connectionId);
-        }
-
-        private void DelPlayer(NetworkMessage netMsg) {
-            var msg = new Msgs.DelPlayer();
-            msg.Deserialize(netMsg.reader);
-
-            ActorMgr.DelPlayer(msg.connectionId);
-        }
-
-        private void Start(NetworkMessage netMsg) {
-            var msg = new Msgs.Start();
-            msg.Deserialize(netMsg.reader);
-
-            this.connectionId = msg.connectionId;
-
-            foreach (var p in msg.playerDatas) {
-                ActorMgr.NewPlayer(p.connectionId, p.position, false);
-            }
-        }
-
-        private void Sync(NetworkMessage netMsg) {
-            if (NetworkServer.active) {
+        public void Update(float dt) {
+            if (!this.Connected) {
                 return;
             }
 
-            var msg = new Msgs.Sync();
-            msg.snapshotsList = this.syncList;
-            msg.Deserialize(netMsg.reader);
+            this.updateTime += dt;
+            this.kcp.Update((uint)Mathf.FloorToInt(this.updateTime * 1000));
 
-            var list = new List<Snapshot>();
+            for (var size = this.kcp.PeekSize(); size > 0; size = this.kcp.PeekSize()) {
+                var buffer = new byte[size];
 
-            foreach (var sl in this.syncList) {
-                bool hasAdded = false;
+                if (this.kcp.Recv(buffer) > 0) {
+                    byte id = buffer[0];
+                    byte[] data = new byte[buffer.Length - 1];
 
-                foreach (var s in sl) {
-                    if (this.connectionId == s.connectionId) {
-                        list.Add(s);
-                        hasAdded = true;
+                    for (int i = 0; i < data.Length; i++) {
+                        data[i] = buffer[i + 1];
                     }
-                    else if (hasAdded) {
-                        break;
-                    }
+
+                    this.Handle(id, data);
                 }
             }
-            
-            int index = list.Count;
+        }
 
-            for (int i = 0; i < list.Count; i++) {
-                if (!list[i].Equals(this.checkList[i])) {
-                    index = i;
-                    print(i);
-                    break;
-                }
+        public bool Connect(string address, int port) {
+            if (this.Connected) {
+                return false;
             }
 
-            this.checkList.RemoveRange(0, list.Count);
+            this.udp = new UdpClient(address, port);
+            this.kcp = new KCP(1, this.SendWrap);
+            this.kcp.NoDelay(1, 10, 2, 1);
+            this.kcp.WndSize(128, 128);
+            this.Send(MsgId.Connect);
+            this.Receive();
+            this.updateTime = 0;
+            this.Connected = true;
 
-            /*
-            if (index == list.Count) {
-                this.checkList.Clear();
+            return true;
+        }
+
+        public bool Disconnect() {
+            if (!this.Connected) {
+                return false;
+            }
+
+            this.Connected = false;
+            this.udp.Close();
+            this.Handle(MsgId.Disconnect, null);
+
+            return true;
+        }
+
+        public void Send(byte id, MessageBase message=null) {
+            byte[] buffer;
+
+            if (message != null) {
+                var writer = new NetworkWriter();
+                message.Serialize(writer);
+
+                var data = writer.AsArray();
+                buffer = new byte[data.Length + 1];
+                buffer[0] = id;
+
+                for (int i = 0; i < data.Length; i++) {
+                    buffer[i + 1] = data[i];
+                }
             }
             else {
-                var player = ActorMgr.GetPlayer(this.connectionId);
-                var frame = list[list.Count - 1].frame;
+                buffer = new byte[] {id};
+            }
 
-                for (int i = this.checkList.Count - 1; i >= 0; i--) {
-                    if (this.checkList[i].frame <= frame) {
-                        this.checkList.RemoveAt(i);
-                    }
+            this.kcp.Send(buffer);
+        }
+
+        public void RegisterHandler(byte id, Action<byte, NetworkReader> Func) {
+            this.handlerMap.Add(id, Func);
+        }
+
+        private void Handle(byte id, byte[] data) {
+            var reader = new NetworkReader(data);
+
+            if (this.handlerMap.ContainsKey(id)) {
+                this.handlerMap[id](id, reader);
+            }
+        }
+
+        private void Receive() {
+            this.udp.BeginReceive(this.ReceiveCallback, null);
+        }
+
+        private void ReceiveCallback(IAsyncResult ar) {
+            try {
+                var data = this.udp.EndReceive(ar, ref EP);
+
+                if (data != null) {
+                    this.kcp.Input(data);
                 }
 
-                Client.Resolve(player, list, index);
-                Client.Resolve(player, this.checkList, 0);
-            } */
+                this.Receive();
+            }
+            catch (SocketException) {
+                this.Disconnect();
+            }
+        }
+
+        private void SendCallback(IAsyncResult ar) {
+            this.udp.EndSend(ar);
+        }
+
+        private void SendWrap(byte[] data, int size) {
+            try {
+                this.udp.BeginSend(data, size, this.SendCallback, null);
+            }
+            catch (SocketException) {
+                this.Disconnect();
+            }
         }
     }
 }

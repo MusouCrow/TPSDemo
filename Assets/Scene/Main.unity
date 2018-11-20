@@ -121,9 +121,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 44049224}
-  - component: {fileID: 44049222}
-  - component: {fileID: 44049225}
-  - component: {fileID: 44049223}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -131,31 +128,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &44049222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 44049221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7cb7fdfcbe334520a12e662cfdcce6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &44049223
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 44049221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c4b4dbe5fcee4248ae6a319e7e571c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  address: localhost
-  port: 8888
-  isPlayer: 1
 --- !u!4 &44049224
 Transform:
   m_ObjectHideFlags: 0
@@ -169,18 +141,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &44049225
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 44049221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cca57c8fd7e1548439c937b48f44beb5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  port: 8888
 --- !u!1 &233671090
 GameObject:
   m_ObjectHideFlags: 0
