@@ -16,7 +16,14 @@ namespace Game.Network {
 
         public bool Listen(int port) {
             if (base.Init()) {
-                this.udp = new UdpClient(port);
+                try {
+                    this.udp = new UdpClient(port);
+                }
+                catch {
+                    this.Active = false;
+                    return false;
+                }
+                
                 this.Receive();
 
                 return true;
@@ -40,10 +47,10 @@ namespace Game.Network {
         }
 
         public void Send(IPEndPoint ep, byte id, MessageBase message=null) {
-            var key = ep.ToString();
+            var fd = ep.ToString();
 
-            if (this.connectionMap.ContainsKey(key)) {
-                var connection = this.connectionMap[key];
+            if (this.connectionMap.ContainsKey(fd)) {
+                var connection = this.connectionMap[fd];
                 base.Send(connection, id, message);
             }
         }
@@ -58,15 +65,15 @@ namespace Game.Network {
             var buffer = this.udp.EndReceive(ar, ref EP);
 
             if (buffer != null) {
-                string key = EP.ToString();
+                string fd = EP.ToString();
                 
-                if (!this.connectionMap.ContainsKey(key) && buffer[buffer.Length - 1] == MsgId.Connect) {
+                if (!this.connectionMap.ContainsKey(fd) && buffer[buffer.Length - 1] == MsgId.Connect) {
                     var ep = new IPEndPoint(EP.Address, EP.Port);
-                    this.connectionMap.Add(key, new Connection(ep, this.SendWrap, this.Handle));
+                    this.connectionMap.Add(fd, new Connection(ep, this.SendWrap, this.Handle));
                 }
 
-                if (this.connectionMap.ContainsKey(key)) {
-                    this.connectionMap[key].Input(buffer);
+                if (this.connectionMap.ContainsKey(fd)) {
+                    this.connectionMap[fd].Input(buffer);
                 }
             }
 
@@ -86,6 +93,7 @@ namespace Game.Network {
             }
 
             foreach (var k in removeList) {
+                this.Handle(this.connectionMap[k].EndPoint, MsgId.Disconnect, null);
                 this.connectionMap.Remove(k);
             }
 
