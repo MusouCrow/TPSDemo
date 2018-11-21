@@ -11,6 +11,18 @@ namespace Game.Network {
         private static ClientMgr INSTANCE;
         private const int INTERVAL = 5;
 
+        private static void Resolve(GameObject gameObject, List<Snapshot> list, int index) {
+            for (int i = index; i < list.Count; i++) {
+                list[i].Resolve(gameObject);
+                
+                if (i < list.Count - 1 && list[i].frame != list[i + 1].frame) {
+                    gameObject.SendMessage("Simulate");
+                }
+            }
+
+            gameObject.SendMessage("Simulate");
+        }
+
         public static void Input(Snapshot snapshot) {
             snapshot.fd = INSTANCE.fd;
             snapshot.frame = INSTANCE.frameCount;
@@ -63,6 +75,16 @@ namespace Game.Network {
                 this.frameCount++;
                 ClientMgr.Input(new Snapshot());
 
+                if (this.syncList.Count > 0) {
+                    foreach (var s in this.syncList[0]) {
+                        if (s.fd != this.fd) {
+                            ActorMgr.Input(s);
+                        }
+                    }
+                    
+                    this.syncList.RemoveAt(0);
+                }
+
                 if (this.frameCount % INTERVAL == 0) {
                     var msg = new Msg.Input() {
                         snapshotList = this.sendList
@@ -112,15 +134,45 @@ namespace Game.Network {
             var list = new List<Snapshot>();
 
             foreach (var sl in this.syncList) {
+                bool hasAdded = false;
+
                 foreach (var s in sl) {
-                    if (s.fd == this.fd) {
+                    if (this.fd == s.fd) {
                         list.Add(s);
+                        hasAdded = true;
+                    }
+                    else if (hasAdded) {
+                        break;
                     }
                 }
             }
 
-            this.checkList.RemoveRange(0, list.Count);
-            this.syncList.Clear();
+            int index = list.Count;
+
+            for (int i = 0; i < list.Count; i++) {
+                if (!list[i].Equals(this.checkList[i])) {
+                    index = i;
+                    print(i);
+                    break;
+                }
+            }
+
+            if (index == list.Count) { // Agreement
+                this.checkList.RemoveRange(0, list.Count);
+            }
+            else {
+                var player = ActorMgr.GetPlayer(this.fd);
+                var frame = list[list.Count - 1].frame;
+
+                for (int i = this.checkList.Count - 1; i >= 0; i--) {
+                    if (this.checkList[i].frame <= frame) {
+                        this.checkList.RemoveAt(i);
+                    }
+                }
+
+                ClientMgr.Resolve(player, list, index);
+                ClientMgr.Resolve(player, this.checkList, 0);
+            }
         }
     }
 }

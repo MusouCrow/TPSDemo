@@ -21,12 +21,12 @@ namespace Game.Actor {
         public string fd;
         public int frame;
 
-        public virtual void Serialize(NetworkWriter writer) {
+        public virtual void Serialize(NetworkWriter writer, bool isFull) {
             writer.Write(this.fd);
             writer.Write(this.frame);
         }
 
-        public virtual void Deserialize(NetworkReader reader) {
+        public virtual void Deserialize(NetworkReader reader, bool isFull) {
             this.fd = reader.ReadString();
             this.frame = reader.ReadInt32();
         }
@@ -34,5 +34,7 @@ namespace Game.Actor {
         public virtual bool Equals(Snapshot snapshot) {
             return this.fd == snapshot.fd && this.frame == snapshot.frame;
         }
+
+        public virtual void Resolve(GameObject gameObject) {}
     }
 }

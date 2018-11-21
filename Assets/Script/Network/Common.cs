@@ -72,7 +72,7 @@ namespace Game.Network {
                 writer.Write(this.snapshotList.Count);
 
                 foreach (var s in this.snapshotList) {
-                    s.Serialize(writer);
+                    s.Serialize(writer, false);
                 }
             }
 
@@ -81,7 +81,7 @@ namespace Game.Network {
 
                 for (int i = 0; i < count; i++) {
                     var s = new Snapshot();
-                    s.Deserialize(reader);
+                    s.Deserialize(reader, false);
                     this.snapshotList.Add(s);
                 }
             }
@@ -97,7 +97,7 @@ namespace Game.Network {
                     writer.Write(sl.Count);
 
                     foreach (var s in sl) {
-                        s.Serialize(writer);
+                        s.Serialize(writer, true);
                     }
                 }
             }
@@ -111,7 +111,7 @@ namespace Game.Network {
 
                     for (int j = 0; j < len; j++) {
                         var s = new Snapshot();
-                        s.Deserialize(reader);
+                        s.Deserialize(reader, true);
                         list.Add(s);
                     }
 
