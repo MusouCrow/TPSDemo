@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,14 +11,17 @@ namespace Game.Network {
         private static ClientMgr INSTANCE;
         private const int INTERVAL = 5;
 
-        public static void Input() {
-            var snapshot = new Snapshot() {
-                fd = INSTANCE.fd,
-                frame = INSTANCE.frameCount
-            };
-
+        public static void Input(Snapshot snapshot) {
+            snapshot.fd = INSTANCE.fd;
+            snapshot.frame = INSTANCE.frameCount;
             INSTANCE.sendList.Add(snapshot);
             INSTANCE.checkList.Add(snapshot);
+        }
+
+        public static string FD {
+            get {
+                return INSTANCE.fd;
+            }
         }
 
         [SerializeField]
@@ -33,12 +35,7 @@ namespace Game.Network {
         private List<Snapshot> sendList;
         private List<Snapshot> checkList;
         private List<List<Snapshot>> syncList;
-        private StreamWriter streamWriter;
-
-        public string fd {
-            get;
-            private set;
-        }
+        private string fd;
 
         protected void Awake() {
             INSTANCE = this;
@@ -52,8 +49,10 @@ namespace Game.Network {
         protected void Start() {
             this.client.RegisterHandler(MsgId.Connect, this.Connected);
             this.client.RegisterHandler(MsgId.Disconnect, this.Disconnected);
-            this.client.RegisterHandler(MsgId.Heartbeat, this.Heartbeat);
             this.client.RegisterHandler(MsgId.Sync, this.Sync);
+            this.client.RegisterHandler(MsgId.NewPlayer, this.NewPlayer);
+            this.client.RegisterHandler(MsgId.DelPlayer, this.DelPlayer);
+
             this.client.Connect(this.address, this.port);
         }
 
@@ -62,7 +61,7 @@ namespace Game.Network {
 
             if (this.start && this.client.Active) {
                 this.frameCount++;
-                ClientMgr.Input();
+                ClientMgr.Input(new Snapshot());
 
                 if (this.frameCount % INTERVAL == 0) {
                     var msg = new Msg.Input() {
@@ -79,18 +78,29 @@ namespace Game.Network {
             var msg = new Msg.Connect();
             msg.Deserialize(reader);
             this.fd = msg.fd;
-            this.start = true;
 
-            this.streamWriter = new StreamWriter(this.fd + ".log", false);
+            foreach (var p in msg.playerDatas) {
+                ActorMgr.NewPlayer(p.fd, p.position, false);
+            }
+
+            this.start = true;
         }
 
         private void Disconnected(byte msgId, NetworkReader reader, IPEndPoint ep) {
             print("Client Disconnected");
-            this.streamWriter.Close();
         }
 
-        private void Heartbeat(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            print("Client Heartbeat");
+        private void NewPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            var playerData = new PlayerData();
+            var msg = new Msg.NewPlayer() {playerData = playerData};
+            msg.Deserialize(reader);
+            ActorMgr.NewPlayer(playerData.fd, playerData.position, this.fd == playerData.fd);
+        }
+
+        private void DelPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            var msg = new Msg.DelPlayer();
+            msg.Deserialize(reader);
+            ActorMgr.DelPlayer(msg.fd);
         }
 
         private void Sync(byte msgId, NetworkReader reader, IPEndPoint ep) {
@@ -107,10 +117,6 @@ namespace Game.Network {
                         list.Add(s);
                     }
                 }
-            }
-
-            for (int i = 0; i < list.Count; i++) {
-                this.streamWriter.WriteLine(list[i].fd + ", " + list[i].frame + " | " + this.checkList[i].fd + ", " + this.checkList[i].frame);
             }
 
             this.checkList.RemoveRange(0, list.Count);

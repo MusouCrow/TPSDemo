@@ -102,7 +102,7 @@ namespace Game.Network {
 
         private void Heartbeat(byte msgId, NetworkReader reader, IPEndPoint ep) {
             this.Send(ep, MsgId.Heartbeat);
-            Debug.Log("Server Heartbeat " + ep.ToString());
+            //Debug.Log("Server Heartbeat " + ep.ToString());
         }
     }
 }

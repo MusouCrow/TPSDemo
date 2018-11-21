@@ -1,9 +1,10 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+
+using Random = UnityEngine.Random;
 
 namespace Game.Network {
     using Actor;
@@ -18,7 +19,6 @@ namespace Game.Network {
         private int frameCount;
         private Dictionary<string, List<Snapshot>> snapshotListMap;
         private List<List<Snapshot>> syncList;
-        private StreamWriter streamWriter;
 
         protected void Awake() {
             this.server = new Server();
@@ -36,8 +36,6 @@ namespace Game.Network {
                 Destroy(this);
                 return;
             }
-
-            this.streamWriter = new StreamWriter("server.log", false);
         }
 
         protected void FixedUpdate() {
@@ -65,35 +63,48 @@ namespace Game.Network {
 
                 if (this.frameCount % INTERVAL == 0) {
                     this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
-                    /*
-                    foreach (var sl in this.syncList) {
-                        this.streamWriter.Write(this.frameCount + ": ");
-
-                        foreach (var s in sl) {
-                            this.streamWriter.Write("(" + s.fd + ", " + s.frame + ") ");
-                        }
-
-                        this.streamWriter.Write("\n");
-                    } */
-
                     this.syncList.Clear();
-                }
-
-                if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
-                    this.server.Close();
-                    //this.streamWriter.Close();
                 }
             }
         }
 
         private void NewConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var fd = ep.ToString();
+            
+            {
+                var msg = new Msg.Connect() {
+                    fd = fd,
+                    playerDatas = ActorMgr.ToPlayerDatas()
+                };
+                
+                this.server.Send(ep, MsgId.Connect, msg);
+            }
+
+            {
+                var x = Mathf.Lerp(-2, 2, Random.value);
+                var z = Mathf.Lerp(-2, 2, Random.value);
+
+                var msg = new Msg.NewPlayer() {
+                    playerData = new PlayerData() {
+                        fd = fd,
+                        position = new Vector3(x, 0, z)
+                    }
+                };
+
+                this.server.SendToAll(MsgId.NewPlayer, msg);
+            }
+
             print("New Client: " + fd);
-            this.server.Send(ep, MsgId.Connect, new Msg.Connect() {fd = fd});
         }
 
         private void DelConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            print("Del Client: " + ep.ToString());
+            var fd = ep.ToString();
+            var msg = new Msg.DelPlayer() {
+                fd = fd
+            };
+            this.server.SendToAll(MsgId.DelPlayer, msg);
+            
+            print("Del Client: " + fd);
         }
 
         private void Input(byte msgId, NetworkReader reader, IPEndPoint ep) {

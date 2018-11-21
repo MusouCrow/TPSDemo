@@ -1,6 +1,22 @@
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Game.Actor {
+    public class PlayerData {
+        public string fd;
+        public Vector3 position;
+
+        public void Serialize(NetworkWriter writer) {
+            writer.Write(this.fd);
+            writer.Write(this.position);
+        }
+
+        public void Deserialize(NetworkReader reader) {
+            this.fd = reader.ReadString();
+            this.position = reader.ReadVector3();
+        }
+    }
+
     public class Snapshot {
         public string fd;
         public int frame;
