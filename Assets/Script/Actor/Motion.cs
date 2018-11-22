@@ -12,16 +12,14 @@ namespace Game.Actor {
         }
 
         protected void FixedUpdate() {
-            var x = Input.GetAxis("Vertical");
-            var z = -Input.GetAxis("Horizontal");
+            var x = Input.GetAxis("Vertical") * 0.5f;
+            var z = -Input.GetAxis("Horizontal") * 0.5f;
 
-            if (this.velocity.x != x || this.velocity.z != z) {
-                var move = new Snapshots.Move() {
-                    velocity = new Vector3(x, 0, z),
-                    position = this.transform.position
-                };
-                this.identity.Input(move);
-            }
+            var move = new Snapshots.Move() {
+                velocity = new Vector3(x, 0, z),
+                position = this.transform.position
+            };
+            this.identity.Input(move);
 
             this.Simulate();
         }
@@ -29,6 +27,7 @@ namespace Game.Actor {
         public void Simulate() {
             if (this.velocity != Vector3.zero) {
                 this.transform.Translate(this.velocity);
+                this.velocity = Vector3.zero;
             }
         }
 

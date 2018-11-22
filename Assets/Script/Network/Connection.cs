@@ -25,7 +25,7 @@ namespace Game.Network {
 
         public void Update(uint current) {
             this.kcp.Update(current);
-
+            
             for (var size = this.kcp.PeekSize(); size > 0; size = this.kcp.PeekSize()) {
                 var buffer = new byte[size];
 

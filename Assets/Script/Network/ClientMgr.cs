@@ -8,8 +8,8 @@ namespace Game.Network {
     using Actor;
 
     public class ClientMgr : MonoBehaviour {
+        public const int INTERVAL = 5;
         private static ClientMgr INSTANCE;
-        private const int INTERVAL = 5;
         
         /*
         private static void Resolve(GameObject gameObject, List<Snapshot> list, int index) {
@@ -41,7 +41,6 @@ namespace Game.Network {
         private string address;
         [SerializeField]
         private int port;
-
         private Client client;
         private int frameCount;
         private bool start;
@@ -75,7 +74,7 @@ namespace Game.Network {
             if (this.start && this.client.Active) {
                 this.frameCount++;
                 ClientMgr.Input(new Snapshot());
-
+                
                 if (this.syncList.Count > 0) {
                     foreach (var s in this.syncList[0]) {
                         //if (s.fd != this.fd) {
@@ -94,6 +93,10 @@ namespace Game.Network {
                     this.sendList.Clear();
                 }
             }
+        }
+
+        protected void OnGUI() {
+            GUILayout.Label(this.syncList.Count.ToString());
         }
 
         private void Connected(byte msgId, NetworkReader reader, IPEndPoint ep) {
@@ -129,6 +132,14 @@ namespace Game.Network {
         private void Sync(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var msg = new Msg.Sync() {syncList = this.syncList};
             msg.Deserialize(reader);
+            /*
+            var scale = this.syncList.Count - RANGE;
+            Time.timeScale = scale < 1 ? 1 : scale;
+
+            if (scale > 1) {
+                print(scale);
+            } */
+
             /*
             var list = new List<Snapshot>();
 

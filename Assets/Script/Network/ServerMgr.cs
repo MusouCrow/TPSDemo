@@ -14,7 +14,6 @@ namespace Game.Network {
 
         [SerializeField]
         private int port;
-
         private Server server;
         private int frameCount;
         private Dictionary<string, List<Snapshot>> snapshotListMap;
@@ -65,10 +64,10 @@ namespace Game.Network {
                     this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
                     this.syncList.Clear();
                 }
-
+                /*
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
                     this.server.Close();
-                }
+                } */
             }
         }
 
