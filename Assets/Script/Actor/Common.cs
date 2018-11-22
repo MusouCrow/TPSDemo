@@ -35,6 +35,10 @@ namespace Game.Actor {
         public virtual bool Equals(Snapshot snapshot) {
             return this.fd == snapshot.fd && this.frame == snapshot.frame;
         }
+
+        public virtual string Print() {
+            return "(" + this.fd + ", " + this.frame + ", " + this.ToString() + ")";
+        }
     }
 
     namespace Snapshots {

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,8 @@ namespace Game.Network {
     using Actor;
 
     public class ClientMgr : MonoBehaviour {
-        public const int INTERVAL = 5;
+        private const int INTERVAL = 5;
+        private const int SYNCMAX = 15;
         private static ClientMgr INSTANCE;
         
         /*
@@ -48,6 +50,7 @@ namespace Game.Network {
         private List<Snapshot> checkList;
         private List<List<Snapshot>> syncList;
         private string fd;
+        private StreamWriter writer;
 
         protected void Awake() {
             INSTANCE = this;
@@ -76,13 +79,18 @@ namespace Game.Network {
                 ClientMgr.Input(new Snapshot());
                 
                 if (this.syncList.Count > 0) {
-                    foreach (var s in this.syncList[0]) {
-                        //if (s.fd != this.fd) {
-                        ActorMgr.Input(s);
-                        //}
-                    }
-                    
-                    this.syncList.RemoveAt(0);
+                    do {
+                        foreach (var s in this.syncList[0]) {
+                            //if (s.fd != this.fd) {
+                            ActorMgr.Input(s);
+                            //}
+                            this.writer.Write(s.Print() + " ");
+                        }
+                        
+                        this.writer.Write("\n");
+                        ActorMgr.Simulate();
+                        this.syncList.RemoveAt(0);
+                    } while(this.syncList.Count > SYNCMAX);
                 }
 
                 if (this.frameCount % INTERVAL == 0) {
@@ -109,11 +117,13 @@ namespace Game.Network {
                 ActorMgr.NewPlayer(p.fd, p.position, false);
             }
 
+            this.writer = new StreamWriter(this.fd + ".log");
             this.start = true;
         }
 
         private void Disconnected(byte msgId, NetworkReader reader, IPEndPoint ep) {
             print("Client Disconnected");
+            this.writer.Close();
         }
 
         private void NewPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {
@@ -131,7 +141,13 @@ namespace Game.Network {
 
         private void Sync(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var msg = new Msg.Sync() {syncList = this.syncList};
-            msg.Deserialize(reader);
+            try {
+                msg.Deserialize(reader);
+            }
+            catch {
+                print(this.frameCount);
+            }
+
             /*
             var scale = this.syncList.Count - RANGE;
             Time.timeScale = scale < 1 ? 1 : scale;

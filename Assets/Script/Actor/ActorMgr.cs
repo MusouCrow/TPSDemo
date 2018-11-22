@@ -54,13 +54,21 @@ namespace Game.Actor {
             return playerDatas;
         }
 
-        public static void Input(Snapshot snapshot) {
-            var identity = ActorMgr.playerMap[snapshot.fd].GetComponent<Identity>();
-            identity.RunEvent(snapshot);
-        }
-
         public static GameObject GetPlayer(string fd) {
             return ActorMgr.playerMap[fd];
+        }
+
+        public static void Input(Snapshot snapshot) {
+            if (ActorMgr.playerMap.ContainsKey(snapshot.fd)) {
+                var identity = ActorMgr.playerMap[snapshot.fd].GetComponent<Identity>();
+                identity.RunEvent(snapshot);
+            }
+        }
+
+        public static void Simulate() {
+            foreach (var i in ActorMgr.playerMap) {
+                i.Value.SendMessage("Simulate");
+            }
         }
     }
 }

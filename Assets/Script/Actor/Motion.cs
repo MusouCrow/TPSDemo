@@ -20,8 +20,6 @@ namespace Game.Actor {
                 position = this.transform.position
             };
             this.identity.Input(move);
-
-            this.Simulate();
         }
 
         public void Simulate() {
