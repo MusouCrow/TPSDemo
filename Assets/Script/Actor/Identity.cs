@@ -25,8 +25,10 @@ namespace Game.Actor {
         }
 
         public void RunEvent(Snapshot snapshot) {
-            if (this.eventMap.ContainsKey(snapshot.GetType())) {
-                this.eventMap[snapshot.GetType()](snapshot);
+            var type = snapshot.GetType();
+            
+            if (this.eventMap.ContainsKey(type)) {
+                this.eventMap[type](snapshot);
             }
         }
 
@@ -38,7 +40,7 @@ namespace Game.Actor {
         }
 
         public void Input(Snapshot snapshot) {
-            this.RunEvent(snapshot);
+            //this.RunEvent(snapshot);
             ClientMgr.Input(snapshot);
         }
     }

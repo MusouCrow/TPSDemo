@@ -10,7 +10,8 @@ namespace Game.Network {
     public class ClientMgr : MonoBehaviour {
         private static ClientMgr INSTANCE;
         private const int INTERVAL = 5;
-
+        
+        /*
         private static void Resolve(GameObject gameObject, List<Snapshot> list, int index) {
             for (int i = index; i < list.Count; i++) {
                 list[i].Resolve(gameObject);
@@ -21,13 +22,13 @@ namespace Game.Network {
             }
 
             gameObject.SendMessage("Simulate");
-        }
+        } */
 
         public static void Input(Snapshot snapshot) {
             snapshot.fd = INSTANCE.fd;
             snapshot.frame = INSTANCE.frameCount;
             INSTANCE.sendList.Add(snapshot);
-            INSTANCE.checkList.Add(snapshot);
+            //INSTANCE.checkList.Add(snapshot);
         }
 
         public static string FD {
@@ -77,9 +78,9 @@ namespace Game.Network {
 
                 if (this.syncList.Count > 0) {
                     foreach (var s in this.syncList[0]) {
-                        if (s.fd != this.fd) {
-                            ActorMgr.Input(s);
-                        }
+                        //if (s.fd != this.fd) {
+                        ActorMgr.Input(s);
+                        //}
                     }
                     
                     this.syncList.RemoveAt(0);
@@ -126,11 +127,9 @@ namespace Game.Network {
         }
 
         private void Sync(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            var msg = new Msg.Sync() {
-                syncList = this.syncList
-            };
+            var msg = new Msg.Sync() {syncList = this.syncList};
             msg.Deserialize(reader);
-
+            /*
             var list = new List<Snapshot>();
 
             foreach (var sl in this.syncList) {
@@ -172,7 +171,7 @@ namespace Game.Network {
 
                 ClientMgr.Resolve(player, list, index);
                 ClientMgr.Resolve(player, this.checkList, 0);
-            }
+            } */
         }
     }
 }

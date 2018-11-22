@@ -1,5 +1,7 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Game.Network {
@@ -78,9 +80,11 @@ namespace Game.Network {
 
             public override void Deserialize(NetworkReader reader) {
                 int count = reader.ReadInt32();
+                var assembly = Assembly.GetExecutingAssembly();
 
                 for (int i = 0; i < count; i++) {
-                    var s = new Snapshot();
+                    var type = reader.ReadString();
+                    var s = assembly.CreateInstance(type) as Snapshot;
                     s.Deserialize(reader, false);
                     this.snapshotList.Add(s);
                 }
@@ -104,13 +108,15 @@ namespace Game.Network {
 
             public override void Deserialize(NetworkReader reader) {
                 int count = reader.ReadInt32();
+                var assembly = Assembly.GetExecutingAssembly();
 
                 for (int i = 0; i < count; i++) {
                     var list = new List<Snapshot>();
                     int len = reader.ReadInt32();
 
                     for (int j = 0; j < len; j++) {
-                        var s = new Snapshot();
+                        var type = reader.ReadString();
+                        var s = assembly.CreateInstance(type) as Snapshot;
                         s.Deserialize(reader, true);
                         list.Add(s);
                     }

@@ -22,6 +22,7 @@ namespace Game.Actor {
         public int frame;
 
         public virtual void Serialize(NetworkWriter writer, bool isFull) {
+            writer.Write(this.GetType().ToString());
             writer.Write(this.fd);
             writer.Write(this.frame);
         }
@@ -34,7 +35,32 @@ namespace Game.Actor {
         public virtual bool Equals(Snapshot snapshot) {
             return this.fd == snapshot.fd && this.frame == snapshot.frame;
         }
+    }
 
-        public virtual void Resolve(GameObject gameObject) {}
+    namespace Snapshots {
+        public class Move : Snapshot {
+            public Vector3 velocity;
+            public Vector3 position;
+            
+            public override void Serialize(NetworkWriter writer, bool isFull) {
+                base.Serialize(writer, isFull);
+
+                writer.Write(this.velocity);
+
+                if (isFull) {
+                    writer.Write(this.position);
+                }
+            }
+
+            public override void Deserialize(NetworkReader reader, bool isFull) {
+                base.Deserialize(reader, isFull);
+                
+                this.velocity = reader.ReadVector3();
+
+                if (isFull) {
+                    this.position = reader.ReadVector3();
+                }
+            }
+        }
     }
 }
