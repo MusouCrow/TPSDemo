@@ -62,13 +62,13 @@ namespace Game.Network {
         }
 
         protected override void ReceiveCallback(IAsyncResult ar) {
-            var buffer = this.udp.EndReceive(ar, ref EP);
+            IPEndPoint ep = null;
+            var buffer = this.udp.EndReceive(ar, ref ep);
 
             if (buffer != null) {
-                string fd = EP.ToString();
+                string fd = ep.ToString();
                 
                 if (!this.connectionMap.ContainsKey(fd) && buffer[buffer.Length - 1] == MsgId.Connect) {
-                    var ep = new IPEndPoint(EP.Address, EP.Port);
                     this.connectionMap.Add(fd, new Connection(ep, this.SendWrap, this.Handle));
                 }
 

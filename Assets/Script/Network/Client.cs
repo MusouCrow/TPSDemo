@@ -60,7 +60,8 @@ namespace Game.Network {
 
         protected override void ReceiveCallback(IAsyncResult ar) {
             try {
-                var buffer = this.udp.EndReceive(ar, ref EP);
+                IPEndPoint ep = null;
+                var buffer = this.udp.EndReceive(ar, ref ep);
 
                 if (buffer != null) {
                     this.connection.Input(buffer);

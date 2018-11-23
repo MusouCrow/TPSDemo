@@ -19,7 +19,7 @@ namespace Game.Network {
         private int frameCount;
         private Dictionary<string, List<Snapshot>> snapshotListMap;
         private List<List<Snapshot>> syncList;
-        private StreamWriter writer;
+        //private StreamWriter writer;
 
         protected void Awake() {
             this.server = new Server();
@@ -38,7 +38,7 @@ namespace Game.Network {
                 return;
             }
 
-            this.writer = new StreamWriter("server.log");
+            //this.writer = new StreamWriter("server.log");
         }
 
         protected void FixedUpdate() {
@@ -61,11 +61,12 @@ namespace Game.Network {
                 }
                 
                 if (list.Count > 0) {
+                    /*
                     foreach (var s in list) {
                         this.writer.Write(s.Print() + " ");
                     }
 
-                    this.writer.Write("\n");
+                    this.writer.Write("\n"); */
                     this.syncList.Add(list);
                 }
 
@@ -76,7 +77,7 @@ namespace Game.Network {
                 
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
                     this.server.Close();
-                    this.writer.Close();
+                    //this.writer.Close();
                 }
             }
         }
@@ -87,12 +88,13 @@ namespace Game.Network {
             {
                 var msg = new Msg.Connect() {
                     fd = fd,
+                    updateTime = this.server.updateTime,
                     playerDatas = ActorMgr.ToPlayerDatas()
                 };
                 
                 this.server.Send(ep, MsgId.Connect, msg);
             }
-
+            
             {
                 var x = Mathf.Lerp(-2, 2, Random.value);
                 var z = Mathf.Lerp(-2, 2, Random.value);

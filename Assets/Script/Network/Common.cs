@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,10 +21,12 @@ namespace Game.Network {
     namespace Msg {
         public class Connect : MessageBase {
             public string fd;
+            public float updateTime;
             public PlayerData[] playerDatas;
 
             public override void Serialize(NetworkWriter writer) {
                 writer.Write(this.fd);
+                writer.Write(this.updateTime);
                 writer.Write(this.playerDatas.Length);
 
                 foreach (var p in this.playerDatas) {
@@ -33,6 +36,7 @@ namespace Game.Network {
 
             public override void Deserialize(NetworkReader reader) {
                 this.fd = reader.ReadString();
+                this.updateTime = reader.ReadSingle();
                 int length = reader.ReadInt32();
                 this.playerDatas = new PlayerData[length];
 
@@ -85,7 +89,7 @@ namespace Game.Network {
                 for (int i = 0; i < count; i++) {
                     var type = reader.ReadString();
                     var s = assembly.CreateInstance(type) as Snapshot;
-                    s.Deserialize(reader, false);
+                    s.Deserialize(reader, false, 0);
                     this.snapshotList.Add(s);
                 }
             }
@@ -109,15 +113,20 @@ namespace Game.Network {
             public override void Deserialize(NetworkReader reader) {
                 int count = reader.ReadInt32();
                 var assembly = Assembly.GetExecutingAssembly();
+                int a = 0;
+                //Debug.Log(count);
 
                 for (int i = 0; i < count; i++) {
                     var list = new List<Snapshot>();
                     int len = reader.ReadInt32();
+                    //Debug.Log(len);
 
                     for (int j = 0; j < len; j++) {
+                        ++a;
                         var type = reader.ReadString();
+                        //Debug.Log(a + "_" + type);
                         var s = assembly.CreateInstance(type) as Snapshot;
-                        s.Deserialize(reader, true);
+                        s.Deserialize(reader, true, a);
                         list.Add(s);
                     }
 

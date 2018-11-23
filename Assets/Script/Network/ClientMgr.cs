@@ -50,7 +50,7 @@ namespace Game.Network {
         private List<Snapshot> checkList;
         private List<List<Snapshot>> syncList;
         private string fd;
-        private StreamWriter writer;
+        //private StreamWriter writer;
 
         protected void Awake() {
             INSTANCE = this;
@@ -77,20 +77,14 @@ namespace Game.Network {
             if (this.start && this.client.Active) {
                 this.frameCount++;
                 ClientMgr.Input(new Snapshot());
-                
+
                 if (this.syncList.Count > 0) {
-                    do {
-                        foreach (var s in this.syncList[0]) {
-                            //if (s.fd != this.fd) {
-                            ActorMgr.Input(s);
-                            //}
-                            this.writer.Write(s.Print() + " ");
-                        }
-                        
-                        this.writer.Write("\n");
-                        ActorMgr.Simulate();
-                        this.syncList.RemoveAt(0);
-                    } while(this.syncList.Count > SYNCMAX);
+                    this.Simulate();
+                    /*
+                    while(this.syncList.Count > SYNCMAX) {
+                        this.client.Update(0);
+                        this.Simulate();
+                    } */
                 }
 
                 if (this.frameCount % INTERVAL == 0) {
@@ -104,7 +98,20 @@ namespace Game.Network {
         }
 
         protected void OnGUI() {
-            GUILayout.Label(this.syncList.Count.ToString());
+            GUILayout.Label(this.syncList.Count + ", " + this.frameCount);
+        }
+
+        private void Simulate() {
+            foreach (var s in this.syncList[0]) {
+                //if (s.fd != this.fd) {
+                ActorMgr.Input(s);
+                //}
+                //this.writer.Write(s.Print() + " ");
+            }
+            
+            //this.writer.Write("\n");
+            ActorMgr.Simulate();
+            this.syncList.RemoveAt(0);
         }
 
         private void Connected(byte msgId, NetworkReader reader, IPEndPoint ep) {
@@ -112,18 +119,19 @@ namespace Game.Network {
             var msg = new Msg.Connect();
             msg.Deserialize(reader);
             this.fd = msg.fd;
+            this.client.updateTime = msg.updateTime;
 
             foreach (var p in msg.playerDatas) {
                 ActorMgr.NewPlayer(p.fd, p.position, false);
             }
 
-            this.writer = new StreamWriter(this.fd + ".log");
+            //this.writer = new StreamWriter(this.fd + ".log");
             this.start = true;
         }
 
         private void Disconnected(byte msgId, NetworkReader reader, IPEndPoint ep) {
             print("Client Disconnected");
-            this.writer.Close();
+            //this.writer.Close();
         }
 
         private void NewPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {
@@ -145,6 +153,8 @@ namespace Game.Network {
                 msg.Deserialize(reader);
             }
             catch {
+                reader.SeekZero();
+                File.WriteAllBytes(this.fd + this.frameCount + ".log", reader.ReadBytes(reader.Length));
                 print(this.frameCount);
             }
 
