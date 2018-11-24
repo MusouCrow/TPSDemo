@@ -76,15 +76,15 @@ namespace Game.Network {
 
             if (this.start && this.client.Active) {
                 this.frameCount++;
-                ClientMgr.Input(new Snapshot());
+                //ClientMgr.Input(new Snapshot());
 
                 if (this.syncList.Count > 0) {
                     this.Simulate();
-                    /*
+                    
                     while(this.syncList.Count > SYNCMAX) {
                         this.client.Update(0);
                         this.Simulate();
-                    } */
+                    }
                 }
 
                 if (this.frameCount % INTERVAL == 0) {

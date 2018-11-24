@@ -15,17 +15,19 @@ namespace Game.Actor {
             var x = Input.GetAxis("Vertical") * 0.5f;
             var z = -Input.GetAxis("Horizontal") * 0.5f;
 
-            var move = new Snapshots.Move() {
-                velocity = new Vector3(x, 0, z),
-                position = this.transform.position
-            };
-            this.identity.Input(move);
+            if (x != 0 || z != 0) {
+                var move = new Snapshots.Move() {
+                    velocity = new Vector3(x, 0, z),
+                    position = this.transform.position
+                };
+                this.identity.Input(move);
+            }
         }
 
         public void Simulate() {
             if (this.velocity != Vector3.zero) {
                 this.transform.Translate(this.velocity);
-                this.velocity = Vector3.zero;
+                //this.velocity = Vector3.zero;
             }
         }
 
