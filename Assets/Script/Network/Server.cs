@@ -46,18 +46,18 @@ namespace Game.Network {
             }
         }
 
-        public void Send(IPEndPoint ep, byte id, MessageBase message=null) {
+        public void Send(IPEndPoint ep, byte id, object msg=null) {
             var fd = ep.ToString();
 
             if (this.connectionMap.ContainsKey(fd)) {
                 var connection = this.connectionMap[fd];
-                base.Send(connection, id, message);
+                base.Send(connection, id, msg);
             }
         }
 
-        public void SendToAll(byte id, MessageBase message=null) {
+        public void SendToAll(byte id, object msg=null) {
             foreach (var c in this.connectionMap) {
-                base.Send(c.Value, id, message);
+                base.Send(c.Value, id, msg);
             }
         }
 
@@ -100,7 +100,7 @@ namespace Game.Network {
             this.heartbeatTimer.Enter();
         }
 
-        private void Heartbeat(byte msgId, NetworkReader reader, IPEndPoint ep) {
+        private void Heartbeat(byte msgId, string data, IPEndPoint ep) {
             this.Send(ep, MsgId.Heartbeat);
             //Debug.Log("Server Heartbeat " + ep.ToString());
         }

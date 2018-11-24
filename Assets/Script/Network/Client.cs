@@ -45,8 +45,8 @@ namespace Game.Network {
             this.connection.Update(this.ToKCPClock());
         }
 
-        public void Send(byte id, MessageBase message=null) {
-            base.Send(this.connection, id, message);
+        public void Send(byte id, object msg=null) {
+            base.Send(this.connection, id, msg);
         }
 
         protected override void SendWrap(IPEndPoint ep, byte[] buffer, int size) {

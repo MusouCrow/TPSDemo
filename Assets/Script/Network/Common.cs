@@ -17,122 +17,28 @@ namespace Game.Network {
         public const byte Input = 5;
         public const byte Sync = 6;
     }
-
+    
     namespace Msg {
-        public class Connect : MessageBase {
+        [Serializable]
+        public class Connect {
             public string fd;
             public float updateTime;
             public PlayerData[] playerDatas;
-
-            public override void Serialize(NetworkWriter writer) {
-                writer.Write(this.fd);
-                writer.Write(this.updateTime);
-                writer.Write(this.playerDatas.Length);
-
-                foreach (var p in this.playerDatas) {
-                    p.Serialize(writer);
-                }
-            }
-
-            public override void Deserialize(NetworkReader reader) {
-                this.fd = reader.ReadString();
-                this.updateTime = reader.ReadSingle();
-                int length = reader.ReadInt32();
-                this.playerDatas = new PlayerData[length];
-
-                for (int i=0; i<length; i++) {
-                    this.playerDatas[i] = new PlayerData();
-                    this.playerDatas[i].Deserialize(reader);
-                }
-            }
         }
 
-        public class NewPlayer : MessageBase {
-            public PlayerData playerData;
-            
-            public override void Serialize(NetworkWriter writer) {
-                playerData.Serialize(writer);
-            }
-
-            public override void Deserialize(NetworkReader reader) {
-                playerData.Deserialize(reader);
-            }
-        }
-
-        public class DelPlayer : MessageBase {
+        [Serializable]
+        public class DelPlayer {
             public string fd;
-
-            public override void Serialize(NetworkWriter writer) {
-                writer.Write(this.fd);
-            }
-
-            public override void Deserialize(NetworkReader reader) {
-                this.fd = reader.ReadString();
-            }   
         }
 
-        public class Input : MessageBase {
-            public List<Snapshot> snapshotList;
-
-            public override void Serialize(NetworkWriter writer) {
-                writer.Write(this.snapshotList.Count);
-
-                foreach (var s in this.snapshotList) {
-                    s.Serialize(writer, false);
-                }
-            }
-
-            public override void Deserialize(NetworkReader reader) {
-                int count = reader.ReadInt32();
-                var assembly = Assembly.GetExecutingAssembly();
-
-                for (int i = 0; i < count; i++) {
-                    var type = reader.ReadString();
-                    var s = assembly.CreateInstance(type) as Snapshot;
-                    s.Deserialize(reader, false, 0);
-                    this.snapshotList.Add(s);
-                }
-            }
+        [Serializable]
+        public class Input {
+            public Snapshot[] snapshots;
         }
 
-        public class Sync : MessageBase {
-            public List<List<Snapshot>> syncList;
-
-            public override void Serialize(NetworkWriter writer) {
-                writer.Write(this.syncList.Count);
-
-                foreach (var sl in this.syncList) {
-                    writer.Write(sl.Count);
-
-                    foreach (var s in sl) {
-                        s.Serialize(writer, true);
-                    }
-                }
-            }
-
-            public override void Deserialize(NetworkReader reader) {
-                int count = reader.ReadInt32();
-                var assembly = Assembly.GetExecutingAssembly();
-                int a = 0;
-                //Debug.Log(count);
-
-                for (int i = 0; i < count; i++) {
-                    var list = new List<Snapshot>();
-                    int len = reader.ReadInt32();
-                    //Debug.Log(len);
-
-                    for (int j = 0; j < len; j++) {
-                        ++a;
-                        var type = reader.ReadString();
-                        //Debug.Log(a + "_" + type);
-                        var s = assembly.CreateInstance(type) as Snapshot;
-                        s.Deserialize(reader, true, a);
-                        list.Add(s);
-                    }
-
-                    this.syncList.Add(list);
-                }
-            }
+        [Serializable]
+        public class Sync {
+            public Snapshot[][] snapshotses;
         }
     }
 }

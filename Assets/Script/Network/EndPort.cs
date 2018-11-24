@@ -1,9 +1,11 @@
 using System;
-using System.Collections.Generic;
+using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using Newtonsoft.Json;
 
 namespace Game.Network {
     using Utility;
@@ -14,7 +16,7 @@ namespace Game.Network {
         public float updateTime;
         protected UdpClient udp;
         protected Timer heartbeatTimer;
-        private Dictionary<byte, Action<byte, NetworkReader, IPEndPoint>> handlerMap;
+        private Dictionary<byte, Action<byte, string, IPEndPoint>> handlerMap;
 
         public bool Active {
             get;
@@ -22,7 +24,7 @@ namespace Game.Network {
         }
 
         public EndPort() {
-            this.handlerMap = new Dictionary<byte, Action<byte, NetworkReader, IPEndPoint>>();
+            this.handlerMap = new Dictionary<byte, Action<byte, string, IPEndPoint>>();
             this.heartbeatTimer = new Timer(HEARTBEAT_INTERVAL, this.HeartbeatTick);
         }
 
@@ -51,7 +53,7 @@ namespace Game.Network {
 
         public abstract void Update(float dt);
 
-        public void RegisterHandler(byte id, Action<byte, NetworkReader, IPEndPoint> Func) {
+        public void RegisterHandler(byte id, Action<byte, string, IPEndPoint> Func) {
             this.handlerMap.Add(id, Func);
         }
 
@@ -59,28 +61,20 @@ namespace Game.Network {
             return (uint)Mathf.FloorToInt(this.updateTime * 1000);
         } 
 
-        protected void Handle(IPEndPoint ep, byte id, byte[] data) {
-            var reader = new NetworkReader(data);
-
+        protected void Handle(IPEndPoint ep, byte id, string data) {
             if (this.handlerMap.ContainsKey(id)) {
-                this.handlerMap[id](id, reader, ep);
+                this.handlerMap[id](id, data, ep);
             }
         }
         
-        protected void Send(Connection connection, byte id, MessageBase message=null) {
+        protected void Send(Connection connection, byte id, object msg=null) {
             byte[] buffer;
 
-            if (message != null) {
-                var writer = new NetworkWriter();
-                message.Serialize(writer);
-
-                var data = writer.AsArray();
-                buffer = new byte[data.Length + 1];
+            if (msg != null) {
+                var data = JsonConvert.SerializeObject(msg);
+                buffer = new byte[Encoding.UTF8.GetByteCount(data) + 1];
                 buffer[0] = id;
-
-                for (int i = 0; i < data.Length; i++) {
-                    buffer[i + 1] = data[i];
-                }
+                Encoding.UTF8.GetBytes(data, 0, data.Length, buffer, 1);
             }
             else {
                 buffer = new byte[] {id};

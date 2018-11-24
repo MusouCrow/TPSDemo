@@ -4,11 +4,12 @@ using UnityEngine;
 
 namespace Game.Actor {
     using Network;
+    using Utility;
 
     public class Identity : MonoBehaviour {
         [NonSerialized]
         public string fd;
-        private Dictionary<Type, Action<Snapshot>> eventMap;
+        private Dictionary<string, Action<Snapshot>> eventMap;
 
         public bool IsPlayer {
             get {
@@ -17,15 +18,15 @@ namespace Game.Actor {
         }
 
         protected void Awake() {
-            this.eventMap = new Dictionary<Type, Action<Snapshot>>();
+            this.eventMap = new Dictionary<string, Action<Snapshot>>();
         }
 
-        public void BindEvent(Type type, Action<Snapshot> Func) {
+        public void BindEvent(string type, Action<Snapshot> Func) {
             this.eventMap.Add(type, Func);
         }
 
         public void RunEvent(Snapshot snapshot) {
-            var type = snapshot.GetType();
+            var type = snapshot.type;
             
             if (this.eventMap.ContainsKey(type)) {
                 this.eventMap[type](snapshot);
@@ -35,13 +36,13 @@ namespace Game.Actor {
         public PlayerData ToPlayerData() {
             return new PlayerData() {
                 fd = this.fd,
-                position = this.transform.position
+                position = this.transform.position.ToN()
             };
         }
 
-        public void Input(Snapshot snapshot) {
+        public void Input(string type, object obj) {
             //this.RunEvent(snapshot);
-            ClientMgr.Input(snapshot);
+            ClientMgr.Input(type, obj);
         }
     }
 }

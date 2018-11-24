@@ -4,6 +4,7 @@ using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using Newtonsoft.Json;
 
 namespace Game.Network {
     using Actor;
@@ -26,9 +27,13 @@ namespace Game.Network {
             gameObject.SendMessage("Simulate");
         } */
 
-        public static void Input(Snapshot snapshot) {
-            snapshot.fd = INSTANCE.fd;
-            snapshot.frame = INSTANCE.frameCount;
+        public static void Input(string type, object obj) {
+            var snapshot = new Snapshot() {
+                fd = INSTANCE.fd,
+                frame = INSTANCE.frameCount,
+                type = type,
+                obj = obj
+            };
             INSTANCE.sendList.Add(snapshot);
             //INSTANCE.checkList.Add(snapshot);
         }
@@ -48,16 +53,16 @@ namespace Game.Network {
         private bool start;
         private List<Snapshot> sendList;
         private List<Snapshot> checkList;
-        private List<List<Snapshot>> syncList;
+        private List<Snapshot[]> syncList;
         private string fd;
-        //private StreamWriter writer;
+        private StreamWriter writer;
 
         protected void Awake() {
             INSTANCE = this;
 
             this.sendList = new List<Snapshot>();
             this.checkList = new List<Snapshot>();
-            this.syncList = new List<List<Snapshot>>();
+            this.syncList = new List<Snapshot[]>();
             this.client = new Client();
         }
 
@@ -76,21 +81,22 @@ namespace Game.Network {
 
             if (this.start && this.client.Active) {
                 this.frameCount++;
-                ClientMgr.Input(new Snapshot());
+                //ClientMgr.Input("", null);
 
                 if (this.syncList.Count > 0) {
                     this.Simulate();
-                    /*
+                    
                     while(this.syncList.Count > SYNCMAX) {
                         this.client.Update(0);
                         this.Simulate();
-                    } */
+                    }
                 }
 
                 if (this.frameCount % INTERVAL == 0) {
                     var msg = new Msg.Input() {
-                        snapshotList = this.sendList
+                        snapshots = this.sendList.ToArray()
                     };
+
                     this.client.Send(MsgId.Input, msg);
                     this.sendList.Clear();
                 }
@@ -114,48 +120,41 @@ namespace Game.Network {
             this.syncList.RemoveAt(0);
         }
 
-        private void Connected(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            print("Client Connected");
-            var msg = new Msg.Connect();
-            msg.Deserialize(reader);
+        private void Connected(byte msgId, string data, IPEndPoint ep) {
+            var msg = JsonConvert.DeserializeObject<Msg.Connect>(data);
             this.fd = msg.fd;
             this.client.updateTime = msg.updateTime;
 
             foreach (var p in msg.playerDatas) {
-                ActorMgr.NewPlayer(p.fd, p.position, false);
+                ActorMgr.NewPlayer(p.fd, p.position.ToV(), false);
             }
 
-            //this.writer = new StreamWriter(this.fd + ".log");
+            this.writer = new StreamWriter(this.fd + ".log");
             this.start = true;
+            print("Client Connected");
         }
 
-        private void Disconnected(byte msgId, NetworkReader reader, IPEndPoint ep) {
+        private void Disconnected(byte msgId, string data, IPEndPoint ep) {
+            this.writer.Close();
             print("Client Disconnected");
-            //this.writer.Close();
         }
 
-        private void NewPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            var playerData = new PlayerData();
-            var msg = new Msg.NewPlayer() {playerData = playerData};
-            msg.Deserialize(reader);
-            ActorMgr.NewPlayer(playerData.fd, playerData.position, this.fd == playerData.fd);
+        private void NewPlayer(byte msgId, string data, IPEndPoint ep) {
+            var playerData = JsonConvert.DeserializeObject<PlayerData>(data);
+            ActorMgr.NewPlayer(playerData.fd, playerData.position.ToV(), this.fd == playerData.fd);
         }
 
-        private void DelPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            var msg = new Msg.DelPlayer();
-            msg.Deserialize(reader);
+        private void DelPlayer(byte msgId, string data, IPEndPoint ep) {
+            var msg = JsonConvert.DeserializeObject<Msg.DelPlayer>(data);
             ActorMgr.DelPlayer(msg.fd);
         }
 
-        private void Sync(byte msgId, NetworkReader reader, IPEndPoint ep) {
-            var msg = new Msg.Sync() {syncList = this.syncList};
-            try {
-                msg.Deserialize(reader);
-            }
-            catch {
-                reader.SeekZero();
-                File.WriteAllBytes(this.fd + this.frameCount + ".log", reader.ReadBytes(reader.Length));
-                print(this.frameCount);
+        private void Sync(byte msgId, string data, IPEndPoint ep) {
+            var msg = JsonConvert.DeserializeObject<Msg.Sync>(data);
+            this.writer.WriteLine(data);
+
+            foreach (var ss in msg.snapshotses) {
+                this.syncList.Add(ss);
             }
 
             /*

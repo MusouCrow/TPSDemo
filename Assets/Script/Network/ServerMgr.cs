@@ -4,11 +4,13 @@ using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using Newtonsoft.Json;
 
 using Random = UnityEngine.Random;
 
 namespace Game.Network {
     using Actor;
+    using Utility;
 
     public class ServerMgr : MonoBehaviour {
         private const int INTERVAL = 10;
@@ -18,13 +20,13 @@ namespace Game.Network {
         private Server server;
         private int frameCount;
         private Dictionary<string, List<Snapshot>> snapshotListMap;
-        private List<List<Snapshot>> syncList;
+        private List<Snapshot[]> syncList;
         //private StreamWriter writer;
 
         protected void Awake() {
             this.server = new Server();
             this.snapshotListMap = new Dictionary<string, List<Snapshot>>();
-            this.syncList = new List<List<Snapshot>>();
+            this.syncList = new List<Snapshot[]>();
         }
 
         protected void Start() {
@@ -67,11 +69,15 @@ namespace Game.Network {
                     }
 
                     this.writer.Write("\n"); */
-                    this.syncList.Add(list);
+                    this.syncList.Add(list.ToArray());
                 }
 
                 if (this.frameCount % INTERVAL == 0) {
-                    this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
+                    var msg = new Msg.Sync() {
+                        snapshotses = this.syncList.ToArray()
+                    };
+
+                    this.server.SendToAll(MsgId.Sync, msg);
                     this.syncList.Clear();
                 }
                 
@@ -82,7 +88,7 @@ namespace Game.Network {
             }
         }
 
-        private void NewConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
+        private void NewConnection(byte msgId, string data, IPEndPoint ep) {
             var fd = ep.ToString();
             
             {
@@ -98,21 +104,18 @@ namespace Game.Network {
             {
                 var x = Mathf.Lerp(-2, 2, Random.value);
                 var z = Mathf.Lerp(-2, 2, Random.value);
-
-                var msg = new Msg.NewPlayer() {
-                    playerData = new PlayerData() {
-                        fd = fd,
-                        position = new Vector3(x, 0, z)
-                    }
+                var playerData = new PlayerData() {
+                    fd = fd,
+                    position = new NVector3(x, 0, z)
                 };
 
-                this.server.SendToAll(MsgId.NewPlayer, msg);
+                this.server.SendToAll(MsgId.NewPlayer, playerData);
             }
 
             print("New Client: " + fd);
         }
 
-        private void DelConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
+        private void DelConnection(byte msgId, string data, IPEndPoint ep) {
             var fd = ep.ToString();
             var msg = new Msg.DelPlayer() {
                 fd = fd
@@ -122,17 +125,17 @@ namespace Game.Network {
             print("Del Client: " + fd);
         }
 
-        private void Input(byte msgId, NetworkReader reader, IPEndPoint ep) {
+        private void Input(byte msgId, string data, IPEndPoint ep) {
             var fd = ep.ToString();
+            var msg = JsonConvert.DeserializeObject<Msg.Input>(data);
 
             if (!this.snapshotListMap.ContainsKey(fd)) {
                 this.snapshotListMap.Add(fd, new List<Snapshot>());
             }
             
-            var msg = new Msg.Input() {
-                snapshotList = this.snapshotListMap[fd]
-            };
-            msg.Deserialize(reader);
+            foreach (var s in msg.snapshots) {
+                this.snapshotListMap[fd].Add(s);
+            }
         }
     }
 }

@@ -1,14 +1,17 @@
 using System;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace Game.Actor {
+    using Utility;
+
     public class Motion : MonoBehaviour {
         private Identity identity;
         private Vector3 velocity;
 
         protected void Start() {
             this.identity = this.GetComponent<Identity>();
-            this.identity.BindEvent(typeof(Snapshots.Move), this.Move);
+            this.identity.BindEvent("Move", this.Move);
         }
 
         protected void FixedUpdate() {
@@ -16,10 +19,10 @@ namespace Game.Actor {
             var z = -Input.GetAxis("Horizontal") * 0.5f;
 
             var move = new Snapshots.Move() {
-                velocity = new Vector3(x, 0, z),
-                position = this.transform.position
+                velocity = new NVector3(x, 0, z),
+                position = this.transform.position.ToN()
             };
-            this.identity.Input(move);
+            this.identity.Input("Move", move);
         }
 
         public void Simulate() {
@@ -30,9 +33,9 @@ namespace Game.Actor {
         }
 
         private void Move(Snapshot snapshot) {
-            var move = snapshot as Snapshots.Move;
+            var move = JsonConvert.DeserializeObject<Snapshots.Move>(snapshot.obj.ToString());
             //this.transform.position = move.position;
-            this.velocity = move.velocity;
+            this.velocity = move.velocity.ToV();
         }
     }
 }
