@@ -31,6 +31,10 @@ namespace Game.Network {
             snapshot.frame = INSTANCE.frameCount;
             INSTANCE.sendList.Add(snapshot);
             //INSTANCE.checkList.Add(snapshot);
+
+            if (INSTANCE.laterSendFrame != INSTANCE.frameCount) {
+                INSTANCE.snapshotFrameCount++;
+            }
         }
 
         public static string FD {
@@ -50,6 +54,8 @@ namespace Game.Network {
         private List<Snapshot> checkList;
         private List<List<Snapshot>> syncList;
         private string fd;
+        private int laterSendFrame;
+        private int snapshotFrameCount;
         //private StreamWriter writer;
 
         protected void Awake() {
@@ -89,10 +95,12 @@ namespace Game.Network {
 
                 if (this.frameCount % INTERVAL == 0) {
                     var msg = new Msg.Input() {
+                        snapshotFrameCount = this.snapshotFrameCount,
                         snapshotList = this.sendList
                     };
                     this.client.Send(MsgId.Input, msg);
                     this.sendList.Clear();
+                    this.snapshotFrameCount = 0;
                 }
             }
         }
@@ -119,7 +127,6 @@ namespace Game.Network {
             var msg = new Msg.Connect();
             msg.Deserialize(reader);
             this.fd = msg.fd;
-            this.client.updateTime = msg.updateTime;
 
             foreach (var p in msg.playerDatas) {
                 ActorMgr.NewPlayer(p.fd, p.position, false);

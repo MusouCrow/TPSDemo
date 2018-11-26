@@ -21,12 +21,10 @@ namespace Game.Network {
     namespace Msg {
         public class Connect : MessageBase {
             public string fd;
-            public float updateTime;
             public PlayerData[] playerDatas;
 
             public override void Serialize(NetworkWriter writer) {
                 writer.Write(this.fd);
-                writer.Write(this.updateTime);
                 writer.Write(this.playerDatas.Length);
 
                 foreach (var p in this.playerDatas) {
@@ -36,7 +34,6 @@ namespace Game.Network {
 
             public override void Deserialize(NetworkReader reader) {
                 this.fd = reader.ReadString();
-                this.updateTime = reader.ReadSingle();
                 int length = reader.ReadInt32();
                 this.playerDatas = new PlayerData[length];
 
@@ -72,9 +69,11 @@ namespace Game.Network {
         }
 
         public class Input : MessageBase {
+            public int snapshotFrameCount;
             public List<Snapshot> snapshotList;
 
             public override void Serialize(NetworkWriter writer) {
+                writer.Write(this.snapshotFrameCount);
                 writer.Write(this.snapshotList.Count);
 
                 foreach (var s in this.snapshotList) {
@@ -83,6 +82,7 @@ namespace Game.Network {
             }
 
             public override void Deserialize(NetworkReader reader) {
+                this.snapshotFrameCount = reader.ReadInt32();
                 int count = reader.ReadInt32();
                 var assembly = Assembly.GetExecutingAssembly();
 

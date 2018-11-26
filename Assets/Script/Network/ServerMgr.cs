@@ -12,18 +12,26 @@ namespace Game.Network {
 
     public class ServerMgr : MonoBehaviour {
         private const int INTERVAL = 10;
+        private class Unit {
+            public List<Snapshot> list;
+            public int count;
+
+            public Unit() {
+                this.list = new List<Snapshot>();
+            }
+        }
 
         [SerializeField]
         private int port;
         private Server server;
         private int frameCount;
-        private Dictionary<string, List<Snapshot>> snapshotListMap;
+        private Dictionary<string, Unit> unitMap;
         private List<List<Snapshot>> syncList;
         //private StreamWriter writer;
 
         protected void Awake() {
             this.server = new Server();
-            this.snapshotListMap = new Dictionary<string, List<Snapshot>>();
+            this.unitMap = new Dictionary<string, Unit>();
             this.syncList = new List<List<Snapshot>>();
         }
 
@@ -49,14 +57,19 @@ namespace Game.Network {
 
                 var list = new List<Snapshot>();
                 
-                foreach (var sl in this.snapshotListMap) {
+                foreach (var i in this.unitMap) {
                     int frame = -1;
+                    var sl = i.Value.list;
 
-                    while (sl.Value.Count > 0 && (frame == -1 || sl.Value[0].frame == frame)) {
-                        var s = sl.Value[0];
-                        frame = s.frame;
+                    while (sl.Count > 0 && (i.Value.count > INTERVAL || (frame == -1 || sl[0].frame == frame))) {
+                        var s = sl[0];
                         list.Add(s);
-                        sl.Value.RemoveAt(0);
+                        sl.RemoveAt(0);
+
+                        if (frame != s.frame) {
+                            frame = s.frame;
+                            i.Value.count--;
+                        }
                     }
                 }
                 
@@ -74,11 +87,11 @@ namespace Game.Network {
                     this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
                     this.syncList.Clear();
                 }
-                
+                /*
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
                     this.server.Close();
                     //this.writer.Close();
-                }
+                } */
             }
         }
 
@@ -88,7 +101,6 @@ namespace Game.Network {
             {
                 var msg = new Msg.Connect() {
                     fd = fd,
-                    updateTime = this.server.updateTime,
                     playerDatas = ActorMgr.ToPlayerDatas()
                 };
                 
@@ -125,14 +137,15 @@ namespace Game.Network {
         private void Input(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var fd = ep.ToString();
 
-            if (!this.snapshotListMap.ContainsKey(fd)) {
-                this.snapshotListMap.Add(fd, new List<Snapshot>());
+            if (!this.unitMap.ContainsKey(fd)) {
+                this.unitMap.Add(fd, new Unit());
             }
             
             var msg = new Msg.Input() {
-                snapshotList = this.snapshotListMap[fd]
+                snapshotList = this.unitMap[fd].list
             };
             msg.Deserialize(reader);
+            this.unitMap[fd].count += msg.snapshotFrameCount;
         }
     }
 }

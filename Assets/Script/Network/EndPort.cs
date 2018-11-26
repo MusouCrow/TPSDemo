@@ -11,8 +11,8 @@ namespace Game.Network {
     public abstract class EndPort {
         private const float HEARTBEAT_INTERVAL = 3;
 
-        public float updateTime;
         protected UdpClient udp;
+        protected float updateTime;
         protected Timer heartbeatTimer;
         private Dictionary<byte, Action<byte, NetworkReader, IPEndPoint>> handlerMap;
 
