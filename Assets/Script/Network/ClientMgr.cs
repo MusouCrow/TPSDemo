@@ -13,28 +13,31 @@ namespace Game.Network {
         private const int SYNCMAX = 15;
         private static ClientMgr INSTANCE;
         
-        /*
-        private static void Resolve(GameObject gameObject, List<Snapshot> list, int index) {
+        private static void Resolve(string fd, List<Snapshot> list, int index) {
             for (int i = index; i < list.Count; i++) {
-                list[i].Resolve(gameObject);
-                
+                ActorMgr.Input(list[i]);
+
                 if (i < list.Count - 1 && list[i].frame != list[i + 1].frame) {
-                    gameObject.SendMessage("Simulate");
+                    ActorMgr.Simulate(fd);
                 }
             }
 
-            gameObject.SendMessage("Simulate");
-        } */
+            ActorMgr.Simulate(fd);
+        }
 
         public static void Input(Snapshot snapshot) {
             snapshot.fd = INSTANCE.fd;
             snapshot.frame = INSTANCE.frameCount;
             INSTANCE.sendList.Add(snapshot);
-            //INSTANCE.checkList.Add(snapshot);
+            INSTANCE.checkList.Add(snapshot);
 
             if (INSTANCE.laterSendFrame != INSTANCE.frameCount) {
                 INSTANCE.snapshotFrameCount++;
             }
+        }
+
+        public static void AddSync(List<Snapshot> list) {
+            INSTANCE.syncList.Add(list);
         }
 
         public static string FD {
@@ -56,7 +59,7 @@ namespace Game.Network {
         private string fd;
         private int laterSendFrame;
         private int snapshotFrameCount;
-        //private StreamWriter writer;
+        private StreamWriter writer;
 
         protected void Awake() {
             INSTANCE = this;
@@ -82,7 +85,7 @@ namespace Game.Network {
 
             if (this.start && this.client.Active) {
                 this.frameCount++;
-                //ClientMgr.Input(new Snapshot());
+                ActorMgr.Simulate(this.fd);
 
                 if (this.syncList.Count > 0) {
                     this.Simulate();
@@ -107,18 +110,25 @@ namespace Game.Network {
 
         protected void OnGUI() {
             GUILayout.Label(this.syncList.Count + ", " + this.frameCount);
+            ActorMgr.Position();
         }
 
         private void Simulate() {
             foreach (var s in this.syncList[0]) {
-                //if (s.fd != this.fd) {
-                ActorMgr.Input(s);
-                //}
-                //this.writer.Write(s.Print() + " ");
+                if (s.fd != this.fd) {
+                    ActorMgr.Input(s);
+                }
+            }
+
+            string laterFd = null;
+
+            foreach (var s in this.syncList[0]) {
+                if (s.fd != this.fd && laterFd != s.fd) {
+                    ActorMgr.Simulate(s.fd);
+                    laterFd = s.fd;
+                }
             }
             
-            //this.writer.Write("\n");
-            ActorMgr.Simulate();
             this.syncList.RemoveAt(0);
         }
 
@@ -155,41 +165,13 @@ namespace Game.Network {
         }
 
         private void Sync(byte msgId, NetworkReader reader, IPEndPoint ep) {
+            if (ServerMgr.Active) {
+                return;
+            }
+
             var msg = new Msg.Sync() {syncList = this.syncList};
-            try {
-                msg.Deserialize(reader);
-            }
-            catch {
-                reader.SeekZero();
-                File.WriteAllBytes(this.fd + this.frameCount + ".log", reader.ReadBytes(reader.Length));
-                print(this.frameCount);
-            }
-
-            /*
-            var scale = this.syncList.Count - RANGE;
-            Time.timeScale = scale < 1 ? 1 : scale;
-
-            if (scale > 1) {
-                print(scale);
-            } */
-
-            /*
-            var list = new List<Snapshot>();
-
-            foreach (var sl in this.syncList) {
-                bool hasAdded = false;
-
-                foreach (var s in sl) {
-                    if (this.fd == s.fd) {
-                        list.Add(s);
-                        hasAdded = true;
-                    }
-                    else if (hasAdded) {
-                        break;
-                    }
-                }
-            }
-
+            msg.Deserialize(reader, this.fd);
+            List<Snapshot> list = msg.selfList;
             int index = list.Count;
 
             for (int i = 0; i < list.Count; i++) {
@@ -204,7 +186,6 @@ namespace Game.Network {
                 this.checkList.RemoveRange(0, list.Count);
             }
             else {
-                var player = ActorMgr.GetPlayer(this.fd);
                 var frame = list[list.Count - 1].frame;
 
                 for (int i = this.checkList.Count - 1; i >= 0; i--) {
@@ -213,9 +194,9 @@ namespace Game.Network {
                     }
                 }
 
-                ClientMgr.Resolve(player, list, index);
-                ClientMgr.Resolve(player, this.checkList, 0);
-            } */
+                ClientMgr.Resolve(this.fd, list, index);
+                ClientMgr.Resolve(this.fd, this.checkList, 0);
+            }
         }
     }
 }

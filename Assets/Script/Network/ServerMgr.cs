@@ -12,6 +12,8 @@ namespace Game.Network {
 
     public class ServerMgr : MonoBehaviour {
         private const int INTERVAL = 10;
+        private static ServerMgr INSTANCE;
+
         private class Unit {
             public List<Snapshot> list;
             public int count;
@@ -21,15 +23,23 @@ namespace Game.Network {
             }
         }
 
+        public static bool Active {
+            get {
+                return INSTANCE.server.Active;
+            }
+        }
+
         [SerializeField]
         private int port;
         private Server server;
         private int frameCount;
         private Dictionary<string, Unit> unitMap;
         private List<List<Snapshot>> syncList;
-        //private StreamWriter writer;
+        private StreamWriter writer;
 
         protected void Awake() {
+            INSTANCE = this;
+
             this.server = new Server();
             this.unitMap = new Dictionary<string, Unit>();
             this.syncList = new List<List<Snapshot>>();
@@ -81,17 +91,18 @@ namespace Game.Network {
 
                     this.writer.Write("\n"); */
                     this.syncList.Add(list);
+                    ClientMgr.AddSync(list);
                 }
 
                 if (this.frameCount % INTERVAL == 0) {
                     this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
                     this.syncList.Clear();
                 }
-                /*
+                
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
                     this.server.Close();
                     //this.writer.Close();
-                } */
+                }
             }
         }
 

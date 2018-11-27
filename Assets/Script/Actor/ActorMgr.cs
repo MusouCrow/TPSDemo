@@ -65,9 +65,14 @@ namespace Game.Actor {
             }
         }
 
-        public static void Simulate() {
-            foreach (var i in ActorMgr.playerMap) {
-                i.Value.SendMessage("Simulate");
+        public static void Simulate(string fd) {
+            var player = ActorMgr.playerMap[fd];
+            player.SendMessage("Simulate");
+        }
+
+        public static void Position() {
+            foreach (var p in ActorMgr.playerMap) {
+                GUILayout.Label(p.Key + ": " + p.Value.GetComponent<Transform>().position.ToString());
             }
         }
     }

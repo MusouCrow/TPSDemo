@@ -77,7 +77,7 @@ namespace Game.Network {
                 writer.Write(this.snapshotList.Count);
 
                 foreach (var s in this.snapshotList) {
-                    s.Serialize(writer, false);
+                    s.Serialize(writer, true);
                 }
             }
 
@@ -89,7 +89,7 @@ namespace Game.Network {
                 for (int i = 0; i < count; i++) {
                     var type = reader.ReadString();
                     var s = assembly.CreateInstance(type) as Snapshot;
-                    s.Deserialize(reader, false, 0);
+                    s.Deserialize(reader, true);
                     this.snapshotList.Add(s);
                 }
             }
@@ -97,6 +97,7 @@ namespace Game.Network {
 
         public class Sync : MessageBase {
             public List<List<Snapshot>> syncList;
+            public List<Snapshot> selfList;
 
             public override void Serialize(NetworkWriter writer) {
                 writer.Write(this.syncList.Count);
@@ -110,24 +111,26 @@ namespace Game.Network {
                 }
             }
 
-            public override void Deserialize(NetworkReader reader) {
+            public void Deserialize(NetworkReader reader, string fd) {
+                base.Deserialize(reader);
+
                 int count = reader.ReadInt32();
                 var assembly = Assembly.GetExecutingAssembly();
-                int a = 0;
-                //Debug.Log(count);
+                this.selfList = new List<Snapshot>();
 
                 for (int i = 0; i < count; i++) {
                     var list = new List<Snapshot>();
                     int len = reader.ReadInt32();
-                    //Debug.Log(len);
 
                     for (int j = 0; j < len; j++) {
-                        ++a;
                         var type = reader.ReadString();
-                        //Debug.Log(a + "_" + type);
                         var s = assembly.CreateInstance(type) as Snapshot;
-                        s.Deserialize(reader, true, a);
+                        s.Deserialize(reader, true);
                         list.Add(s);
+
+                        if (s.fd == fd) {
+                            this.selfList.Add(s);
+                        }
                     }
 
                     this.syncList.Add(list);

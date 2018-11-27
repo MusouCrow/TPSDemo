@@ -40,7 +40,7 @@ namespace Game.Actor {
         }
 
         public void Input(Snapshot snapshot) {
-            //this.RunEvent(snapshot);
+            this.RunEvent(snapshot);
             ClientMgr.Input(snapshot);
         }
     }

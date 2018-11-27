@@ -27,11 +27,9 @@ namespace Game.Actor {
             writer.Write(this.frame);
         }
 
-        public virtual void Deserialize(NetworkReader reader, bool isFull, int index) {
+        public virtual void Deserialize(NetworkReader reader, bool isFull) {
             this.fd = reader.ReadString();
-            //Debug.Log(index + "_" + this.fd);
             this.frame = reader.ReadInt32();
-            //Debug.Log(index + "_" + this.frame);
         }
 
         public virtual bool Equals(Snapshot snapshot) {
@@ -58,16 +56,23 @@ namespace Game.Actor {
                 }
             }
 
-            public override void Deserialize(NetworkReader reader, bool isFull, int index) {
-                base.Deserialize(reader, isFull, index);
+            public override void Deserialize(NetworkReader reader, bool isFull) {
+                base.Deserialize(reader, isFull);
                 
                 this.velocity = reader.ReadVector3();
                 
                 if (isFull) {
                     this.position = reader.ReadVector3();
                 }
+            }
 
-                //Debug.Log(index + "_" + this.velocity + ", " + this.position);
+            public override bool Equals(Snapshot snapshot) {
+                if (!base.Equals(snapshot)) {
+                    return false;
+                }
+
+                var move = snapshot as Move;
+                return this.velocity == move.velocity && this.position == move.position;
             }
         }
     }
