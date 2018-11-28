@@ -5,15 +5,18 @@ namespace Game.Actor {
     public class PlayerData {
         public string fd;
         public Vector3 position;
+        public Quaternion rotation;
 
         public void Serialize(NetworkWriter writer) {
             writer.Write(this.fd);
             writer.Write(this.position);
+            writer.Write(this.rotation);
         }
 
         public void Deserialize(NetworkReader reader) {
             this.fd = reader.ReadString();
             this.position = reader.ReadVector3();
+            this.rotation = reader.ReadQuaternion();
         }
     }
 
@@ -65,7 +68,7 @@ namespace Game.Actor {
                     this.position = reader.ReadVector3();
                 }
             }
-
+            
             public override bool Equals(Snapshot snapshot) {
                 if (!base.Equals(snapshot)) {
                     return false;
@@ -73,6 +76,40 @@ namespace Game.Actor {
 
                 var move = snapshot as Move;
                 return this.velocity == move.velocity && this.position == move.position;
+            }
+        }
+
+        public class Rotate : Snapshot {
+            public Vector3 velocity;
+            public Quaternion rotation;
+            
+            public override void Serialize(NetworkWriter writer, bool isFull) {
+                base.Serialize(writer, isFull);
+
+                writer.Write(this.velocity);
+
+                if (isFull) {
+                    writer.Write(this.rotation);
+                }
+            }
+
+            public override void Deserialize(NetworkReader reader, bool isFull) {
+                base.Deserialize(reader, isFull);
+                
+                this.velocity = reader.ReadVector3();
+                
+                if (isFull) {
+                    this.rotation = reader.ReadQuaternion();
+                }
+            }
+            
+            public override bool Equals(Snapshot snapshot) {
+                if (!base.Equals(snapshot)) {
+                    return false;
+                }
+
+                var rotate = snapshot as Rotate;
+                return this.velocity == rotate.velocity && this.rotation == rotate.rotation;
             }
         }
     }

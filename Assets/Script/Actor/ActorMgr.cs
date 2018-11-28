@@ -9,11 +9,11 @@ namespace Game.Actor {
         private static GameObject playerPrefab = Resources.Load("Prefab/Shooter") as GameObject;
         private static Dictionary<string, GameObject> playerMap = new Dictionary<string, GameObject>();
 
-        public static GameObject NewPlayer(string fd, Vector3 position, bool isLocal) {
-            var obj = GameObject.Instantiate(ActorMgr.playerPrefab, position, Quaternion.identity);
-            obj.name = fd;
-            obj.GetComponent<Identity>().fd = fd;
-            ActorMgr.playerMap.Add(fd, obj);
+        public static GameObject NewPlayer(PlayerData playerData, bool isLocal) {
+            var obj = GameObject.Instantiate(ActorMgr.playerPrefab, playerData.position, playerData.rotation);
+            obj.name = playerData.fd;
+            obj.GetComponent<Identity>().fd = playerData.fd;
+            ActorMgr.playerMap.Add(playerData.fd, obj);
             
             if (isLocal) {
                 var camera = GameObject.FindWithTag("MainCamera");

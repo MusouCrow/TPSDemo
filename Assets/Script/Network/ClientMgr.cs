@@ -86,7 +86,7 @@ namespace Game.Network {
             if (this.start && this.client.Active) {
                 this.frameCount++;
                 ActorMgr.Simulate(this.fd);
-
+                
                 if (this.syncList.Count > 0) {
                     this.Simulate();
                     
@@ -94,6 +94,10 @@ namespace Game.Network {
                         this.client.Update(0);
                         this.Simulate();
                     }
+                }
+                
+                if (UnityEngine.Input.GetKeyDown(KeyCode.R)) {
+                    ClientMgr.Input(new Snapshot());
                 }
 
                 if (this.frameCount % INTERVAL == 0) {
@@ -107,7 +111,7 @@ namespace Game.Network {
                 }
             }
         }
-
+        
         protected void OnGUI() {
             ActorMgr.Position();
         }
@@ -125,7 +129,7 @@ namespace Game.Network {
                     laterFd = s.fd;
                 }
             }
-            
+
             this.syncList.RemoveAt(0);
         }
 
@@ -136,7 +140,7 @@ namespace Game.Network {
             this.fd = msg.fd;
 
             foreach (var p in msg.playerDatas) {
-                ActorMgr.NewPlayer(p.fd, p.position, false);
+                ActorMgr.NewPlayer(p, false);
             }
 
             //this.writer = new StreamWriter(this.fd + ".log");
@@ -152,7 +156,7 @@ namespace Game.Network {
             var playerData = new PlayerData();
             var msg = new Msg.NewPlayer() {playerData = playerData};
             msg.Deserialize(reader);
-            ActorMgr.NewPlayer(playerData.fd, playerData.position, this.fd == playerData.fd);
+            ActorMgr.NewPlayer(playerData, this.fd == playerData.fd);
         }
 
         private void DelPlayer(byte msgId, NetworkReader reader, IPEndPoint ep) {

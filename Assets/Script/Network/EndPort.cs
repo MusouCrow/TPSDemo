@@ -1,7 +1,9 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -74,7 +76,7 @@ namespace Game.Network {
                 var writer = new NetworkWriter();
                 message.Serialize(writer);
 
-                var data = writer.AsArray();
+                var data = Math.Compress(writer.AsArray());
                 buffer = new byte[data.Length + 1];
                 buffer[0] = id;
 

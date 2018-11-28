@@ -7,7 +7,6 @@ namespace Game.Actor {
     public class Motion : MonoBehaviour {
         private Identity identity;
         private Vector3 velocity;
-        private Vector3 later;
 
         protected void Start() {
             this.identity = this.GetComponent<Identity>();
@@ -19,10 +18,9 @@ namespace Game.Actor {
                 var x = Input.GetAxis("Vertical") * 0.5f;
                 var z = -Input.GetAxis("Horizontal") * 0.5f;
 
-                if (x != 0 || z != 0 || this.later != Vector3.zero) {
-                    this.later = new Vector3(x, 0, z);
+                if (x != 0 || z != 0) {
                     var move = new Snapshots.Move() {
-                        velocity = this.later,
+                        velocity = new Vector3(x, 0, z),
                         position = this.transform.position
                     };
                     this.identity.Input(move);
@@ -37,6 +35,7 @@ namespace Game.Actor {
         public void Simulate() {
             if (this.velocity != Vector3.zero) {
                 this.transform.Translate(this.velocity);
+                this.velocity = Vector3.zero;
             }
         }
 
@@ -49,7 +48,7 @@ namespace Game.Actor {
             else {
                 this.transform.position = move.position;
             }
-
+            
             //print(Time.frameCount + "," + move.position);
             this.velocity = move.velocity;
         }

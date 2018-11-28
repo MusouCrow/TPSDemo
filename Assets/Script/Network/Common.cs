@@ -77,7 +77,7 @@ namespace Game.Network {
                 writer.Write(this.snapshotList.Count);
 
                 foreach (var s in this.snapshotList) {
-                    s.Serialize(writer, true);
+                    s.Serialize(writer, false);
                 }
             }
 
@@ -89,7 +89,7 @@ namespace Game.Network {
                 for (int i = 0; i < count; i++) {
                     var type = reader.ReadString();
                     var s = assembly.CreateInstance(type) as Snapshot;
-                    s.Deserialize(reader, true);
+                    s.Deserialize(reader, false);
                     this.snapshotList.Add(s);
                 }
             }

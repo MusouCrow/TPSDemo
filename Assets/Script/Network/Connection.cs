@@ -1,7 +1,10 @@
 using System;
 using System.Net;
+using UnityEngine;
 
 namespace Game.Network {
+    using Utility;
+
     public class Connection {
         private KCP kcp;
         private Action<byte, byte[]> Handle;
@@ -30,14 +33,14 @@ namespace Game.Network {
                 var buffer = new byte[size];
 
                 if (this.kcp.Recv(buffer) > 0) {
-                    byte id = buffer[0];
-                    byte[] data = new byte[buffer.Length - 1];
+                    var id = buffer[0];
+                    var data = new byte[buffer.Length - 1];
 
                     for (int i = 0; i < data.Length; i++) {
                         data[i] = buffer[i + 1];
                     }
-
-                    this.Handle(id, data);
+                    
+                    this.Handle(id, Math.Decompress(data));
                 }
             }
         }

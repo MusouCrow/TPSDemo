@@ -72,6 +72,11 @@ namespace Game.Network {
             if (this.server.Active) {
                 this.frameCount++;
 
+                if (this.frameCount % INTERVAL == 0) {
+                    this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
+                    this.syncList.Clear();
+                }
+
                 var list = new List<Snapshot>();
                 
                 foreach (var i in this.unitMap) {
@@ -91,19 +96,8 @@ namespace Game.Network {
                 }
                 
                 if (list.Count > 0) {
-                    /*
-                    foreach (var s in list) {
-                        this.writer.Write(s.Print() + " ");
-                    }
-
-                    this.writer.Write("\n"); */
-                    this.syncList.Add(list);
                     ClientMgr.AddSync(list);
-                }
-
-                if (this.frameCount % INTERVAL == 0) {
-                    this.server.SendToAll(MsgId.Sync, new Msg.Sync() {syncList = this.syncList});
-                    this.syncList.Clear();
+                    this.syncList.Add(list);
                 }
                 
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
@@ -145,6 +139,10 @@ namespace Game.Network {
 
             Print("New Client: " + fd);
         }
+        /*
+        protected void OnGUI() {
+            GUILayout.Label(this.syncList.Count.ToString());
+        } */
 
         private void DelConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var fd = ep.ToString();
