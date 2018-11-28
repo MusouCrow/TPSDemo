@@ -109,21 +109,18 @@ namespace Game.Network {
         }
 
         protected void OnGUI() {
-            GUILayout.Label(this.syncList.Count + ", " + this.frameCount);
             ActorMgr.Position();
         }
 
         private void Simulate() {
             foreach (var s in this.syncList[0]) {
-                if (s.fd != this.fd) {
-                    ActorMgr.Input(s);
-                }
+                ActorMgr.Input(s);
             }
 
             string laterFd = null;
 
             foreach (var s in this.syncList[0]) {
-                if (s.fd != this.fd && laterFd != s.fd) {
+                if (laterFd != s.fd) {
                     ActorMgr.Simulate(s.fd);
                     laterFd = s.fd;
                 }

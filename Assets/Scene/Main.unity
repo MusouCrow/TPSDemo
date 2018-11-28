@@ -124,7 +124,6 @@ GameObject:
   - component: {fileID: 44049222}
   - component: {fileID: 44049225}
   - component: {fileID: 44049223}
-  - component: {fileID: 44049226}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -154,8 +153,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38373481b02384228a78aa33d4902bd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  address: 127.0.0.1
-  port: 8888
+  address: 193.112.102.21
+  port: 6324
 --- !u!4 &44049224
 Transform:
   m_ObjectHideFlags: 0
@@ -180,19 +179,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24308197498bb47f2bd18be5032e00fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  port: 8888
---- !u!114 &44049226
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 44049221}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4992f2af55c644f291c04c6bfcb319c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  file: {fileID: 4900000, guid: c5ea22038f676457ba42c23bafd5e3cd, type: 3}
+  port: 6324
+  isPlayer: 0
 --- !u!1 &233671090
 GameObject:
   m_ObjectHideFlags: 0

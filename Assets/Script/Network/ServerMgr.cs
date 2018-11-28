@@ -29,8 +29,15 @@ namespace Game.Network {
             }
         }
 
+        private static void Print(object obj) {
+            Debug.Log(obj);
+            Console.WriteLine(obj);
+        }
+
         [SerializeField]
         private int port;
+        [SerializeField]
+        private bool isPlayer;
         private Server server;
         private int frameCount;
         private Dictionary<string, Unit> unitMap;
@@ -118,6 +125,10 @@ namespace Game.Network {
                 this.server.Send(ep, MsgId.Connect, msg);
             }
             
+            if (!this.isPlayer && this.server.ConnectionCount == 1) {
+                return;
+            }
+
             {
                 var x = Mathf.Lerp(-2, 2, Random.value);
                 var z = Mathf.Lerp(-2, 2, Random.value);
@@ -132,7 +143,7 @@ namespace Game.Network {
                 this.server.SendToAll(MsgId.NewPlayer, msg);
             }
 
-            print("New Client: " + fd);
+            Print("New Client: " + fd);
         }
 
         private void DelConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
@@ -142,7 +153,7 @@ namespace Game.Network {
             };
             this.server.SendToAll(MsgId.DelPlayer, msg);
             
-            print("Del Client: " + fd);
+            Print("Del Client: " + fd);
         }
 
         private void Input(byte msgId, NetworkReader reader, IPEndPoint ep) {

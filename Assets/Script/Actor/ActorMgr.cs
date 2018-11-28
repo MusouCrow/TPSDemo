@@ -66,6 +66,10 @@ namespace Game.Actor {
         }
 
         public static void Simulate(string fd) {
+            if (!ActorMgr.playerMap.ContainsKey(fd)) {
+                return;
+            }
+
             var player = ActorMgr.playerMap[fd];
             player.SendMessage("Simulate");
         }

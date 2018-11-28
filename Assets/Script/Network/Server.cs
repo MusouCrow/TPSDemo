@@ -9,6 +9,12 @@ namespace Game.Network {
     public class Server : EndPort {
         private Dictionary<string, Connection> connectionMap;
 
+        public int ConnectionCount {
+            get {
+                return this.connectionMap.Count;
+            }
+        }
+
         public Server() : base() {
             this.connectionMap = new Dictionary<string, Connection>();
             this.RegisterHandler(MsgId.Heartbeat, this.Heartbeat);

@@ -126,11 +126,9 @@ namespace Game.Network {
                         var type = reader.ReadString();
                         var s = assembly.CreateInstance(type) as Snapshot;
                         s.Deserialize(reader, true);
-                        list.Add(s);
-
-                        if (s.fd == fd) {
-                            this.selfList.Add(s);
-                        }
+                        
+                        var sl = s.fd == fd ? this.selfList : list;
+                        sl.Add(s);
                     }
 
                     this.syncList.Add(list);
