@@ -29,11 +29,6 @@ namespace Game.Network {
             }
         }
 
-        private static void Print(object obj) {
-            Debug.Log(obj);
-            Console.WriteLine(obj);
-        }
-
         [SerializeField]
         private int port;
         [SerializeField]
@@ -107,6 +102,12 @@ namespace Game.Network {
             }
         }
 
+        protected void OnGUI() {
+            foreach (var i in this.unitMap) {
+                GUILayout.Label(i.Key + ": " + i.Value.list.Count + ", " + i.Value.count);
+            }
+        }
+
         private void NewConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var fd = ep.ToString();
             
@@ -137,7 +138,7 @@ namespace Game.Network {
                 this.server.SendToAll(MsgId.NewPlayer, msg);
             }
 
-            Print("New Client: " + fd);
+            print("New Client: " + fd);
         }
         /*
         protected void OnGUI() {
@@ -151,7 +152,7 @@ namespace Game.Network {
             };
             this.server.SendToAll(MsgId.DelPlayer, msg);
             
-            Print("Del Client: " + fd);
+            print("Del Client: " + fd);
         }
 
         private void Input(byte msgId, NetworkReader reader, IPEndPoint ep) {

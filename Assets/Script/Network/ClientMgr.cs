@@ -33,6 +33,7 @@ namespace Game.Network {
 
             if (INSTANCE.laterSendFrame != INSTANCE.frameCount) {
                 INSTANCE.snapshotFrameCount++;
+                INSTANCE.laterSendFrame = INSTANCE.frameCount;
             }
         }
 
@@ -95,10 +96,6 @@ namespace Game.Network {
                         this.Simulate();
                     }
                 }
-                
-                if (UnityEngine.Input.GetKeyDown(KeyCode.R)) {
-                    ClientMgr.Input(new Snapshot());
-                }
 
                 if (this.frameCount % INTERVAL == 0) {
                     var msg = new Msg.Input() {
@@ -111,10 +108,10 @@ namespace Game.Network {
                 }
             }
         }
-        
+        /*
         protected void OnGUI() {
             ActorMgr.Position();
-        }
+        } */
 
         private void Simulate() {
             foreach (var s in this.syncList[0]) {
