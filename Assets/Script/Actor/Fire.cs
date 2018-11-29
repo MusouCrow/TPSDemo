@@ -5,12 +5,16 @@ namespace Game.Actor {
     using Network;
 
     public class Fire : MonoBehaviour {
+        public GameObject bullet;
+
         private Identity identity;
         private Vector3 velocity; 
+        private int shootingCount;
 
         protected void Start() {
             this.identity = this.GetComponent<Identity>();
             this.identity.BindEvent(typeof(Snapshots.Rotate), this.Rotate);
+            this.identity.BindEvent(typeof(Snapshots.Shoot), this.Shoot);
         }
 
         protected void FixedUpdate() {
@@ -24,6 +28,14 @@ namespace Game.Actor {
                     };
                     this.identity.Input(rotate);
                 }
+
+                if (Input.GetKeyDown(KeyCode.Mouse0)) {
+                    var shoot = new Snapshots.Shoot() {
+                        position = this.transform.position,
+                        rotation = this.transform.rotation
+                    };
+                    this.identity.Input(shoot);
+                }
             }
         }
 
@@ -31,6 +43,11 @@ namespace Game.Actor {
             if (this.velocity != Vector3.zero) {
                 this.transform.Rotate(this.velocity);
                 this.velocity = Vector3.zero;
+            }
+
+            if (this.shootingCount > 0) {
+                GameObject.Instantiate(this.bullet, this.transform.position, this.transform.rotation);
+                this.shootingCount--;
             }
         }
 
@@ -45,6 +62,21 @@ namespace Game.Actor {
             }
 
             this.velocity = rotate.velocity;
+        }
+
+        private void Shoot(Snapshot snapshot) {
+            var shoot = snapshot as Snapshots.Shoot;
+
+            if (ServerMgr.Active) {
+                shoot.position = this.transform.position;
+                shoot.rotation = this.transform.rotation;
+            }
+            else {
+                this.transform.position = shoot.position;
+                this.transform.rotation = shoot.rotation;
+            }
+
+            this.shootingCount++;
         }
     }
 }

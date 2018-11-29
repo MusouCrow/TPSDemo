@@ -112,5 +112,37 @@ namespace Game.Actor {
                 return this.velocity == rotate.velocity && this.rotation == rotate.rotation;
             }
         }
+
+        public class Shoot : Snapshot {
+            public Vector3 position;
+            public Quaternion rotation;
+
+            public override void Serialize(NetworkWriter writer, bool isFull) {
+                base.Serialize(writer, isFull);
+
+                if (isFull) {
+                    writer.Write(this.position);
+                    writer.Write(this.rotation);
+                }
+            }
+
+            public override void Deserialize(NetworkReader reader, bool isFull) {
+                base.Deserialize(reader, isFull);
+                
+                if (isFull) {
+                    this.position = reader.ReadVector3();
+                    this.rotation = reader.ReadQuaternion();
+                }
+            }
+            
+            public override bool Equals(Snapshot snapshot) {
+                if (!base.Equals(snapshot)) {
+                    return false;
+                }
+
+                var shoot = snapshot as Shoot;
+                return this.position == shoot.position && this.rotation == shoot.rotation;
+            }
+        }
     }
 }

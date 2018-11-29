@@ -25,7 +25,7 @@ namespace Game.Network {
 
         public static bool Active {
             get {
-                return INSTANCE.server.Active;
+                return INSTANCE != null && INSTANCE.server.Active;
             }
         }
 

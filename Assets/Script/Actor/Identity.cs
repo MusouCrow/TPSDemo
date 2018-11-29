@@ -40,7 +40,10 @@ namespace Game.Actor {
         }
 
         public void Input(Snapshot snapshot) {
-            this.RunEvent(snapshot);
+            if (!ServerMgr.Active) {
+                this.RunEvent(snapshot);
+            }
+            
             ClientMgr.Input(snapshot);
         }
     }

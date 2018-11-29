@@ -86,7 +86,10 @@ namespace Game.Network {
 
             if (this.start && this.client.Active) {
                 this.frameCount++;
-                ActorMgr.Simulate(this.fd);
+
+                if (!ServerMgr.Active) {
+                    ActorMgr.Simulate(this.fd);
+                }
                 
                 if (this.syncList.Count > 0) {
                     this.Simulate();
