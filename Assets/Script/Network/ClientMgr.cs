@@ -111,10 +111,10 @@ namespace Game.Network {
                 }
             }
         }
-        /*
+        
         protected void OnGUI() {
             ActorMgr.Position();
-        } */
+        }
 
         private void Simulate() {
             foreach (var s in this.syncList[0]) {

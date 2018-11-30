@@ -102,12 +102,6 @@ namespace Game.Network {
             }
         }
 
-        protected void OnGUI() {
-            foreach (var i in this.unitMap) {
-                GUILayout.Label(i.Key + ": " + i.Value.list.Count + ", " + i.Value.count);
-            }
-        }
-
         private void NewConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var fd = ep.ToString();
             

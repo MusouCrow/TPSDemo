@@ -6,11 +6,13 @@ namespace Game.Actor {
 
     public class Motion : MonoBehaviour {
         private Identity identity;
+        private CharacterController controller;
         private Vector3 velocity;
 
         protected void Start() {
             this.identity = this.GetComponent<Identity>();
             this.identity.BindEvent(typeof(Snapshots.Move), this.Move);
+            this.controller = this.GetComponent<CharacterController>();
         }
 
         protected void FixedUpdate() {
@@ -34,7 +36,7 @@ namespace Game.Actor {
 
         public void Simulate() {
             if (this.velocity != Vector3.zero) {
-                this.transform.Translate(this.velocity);
+                this.controller.Move(this.transform.TransformDirection(this.velocity));
                 this.velocity = Vector3.zero;
             }
         }
