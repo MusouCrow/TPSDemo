@@ -14,6 +14,10 @@ namespace Game.Network {
         private static ClientMgr INSTANCE;
         
         private static void Resolve(string fd, List<Snapshot> list, int index) {
+            if (list.Count == 0) {
+                return;
+            }
+
             for (int i = index; i < list.Count; i++) {
                 ActorMgr.Input(list[i]);
 
@@ -172,7 +176,8 @@ namespace Game.Network {
 
             var msg = new Msg.Sync() {syncList = this.syncList};
             msg.Deserialize(reader, this.fd);
-            List<Snapshot> list = msg.selfList;
+            var list = msg.selfList;
+            var serverList = msg.serverList;
             int index = list.Count;
 
             for (int i = 0; i < list.Count; i++) {
@@ -198,6 +203,8 @@ namespace Game.Network {
                 ClientMgr.Resolve(this.fd, list, index);
                 ClientMgr.Resolve(this.fd, this.checkList, 0);
             }
+
+            ClientMgr.Resolve(this.fd, serverList, 0);
         }
     }
 }

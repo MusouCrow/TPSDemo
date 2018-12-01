@@ -29,6 +29,26 @@ namespace Game.Network {
             }
         }
 
+        public static bool IsPlayer {
+            get {
+                return INSTANCE != null && INSTANCE.isPlayer;
+            }
+        }
+
+        public static void Input(string fd, Snapshot snapshot) {
+            snapshot.fd = fd;
+            snapshot.frame = INSTANCE.frameCount;
+            snapshot.fromServer = true;
+            var unitMap = INSTANCE.unitMap;
+
+            if (!unitMap.ContainsKey(fd)) {
+                unitMap.Add(fd, new Unit());
+            }
+
+            unitMap[fd].count++;
+            unitMap[fd].list.Insert(0, snapshot);
+        }
+
         [SerializeField]
         private int port;
         [SerializeField]
@@ -94,11 +114,11 @@ namespace Game.Network {
                     ClientMgr.AddSync(list);
                     this.syncList.Add(list);
                 }
-                
+                /*
                 if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
                     this.server.Close();
                     //this.writer.Close();
-                }
+                } */
             }
         }
 
@@ -134,6 +154,7 @@ namespace Game.Network {
 
             print("New Client: " + fd);
         }
+
         /*
         protected void OnGUI() {
             GUILayout.Label(this.syncList.Count.ToString());

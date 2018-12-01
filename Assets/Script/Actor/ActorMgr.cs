@@ -13,6 +13,7 @@ namespace Game.Actor {
             var obj = GameObject.Instantiate(ActorMgr.playerPrefab, playerData.position, playerData.rotation);
             obj.name = playerData.fd;
             obj.GetComponent<Identity>().fd = playerData.fd;
+            obj.GetComponent<Battle>().hp = playerData.hp;
             ActorMgr.playerMap.Add(playerData.fd, obj);
             
             if (isLocal) {
@@ -47,7 +48,8 @@ namespace Game.Actor {
             int i = 0;
 
             foreach (var p in ActorMgr.playerMap.Values) {
-                playerDatas[i] = p.GetComponent<Identity>().ToPlayerData();
+                playerDatas[i] = new PlayerData();
+                p.SendMessage("HandlePlayerData", playerDatas[i]);
                 i++;
             }
 

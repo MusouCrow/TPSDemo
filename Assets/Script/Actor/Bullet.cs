@@ -6,17 +6,31 @@ namespace Game.Actor {
         public float power;
         public float speed;
         public GameObject effect;
+        private int direction = 1;
 
         protected void FixedUpdate() {
-            var origin = this.transform.position;
-            this.transform.Translate(this.power, 0, 0);
+            RaycastHit hit;
+            var ts = this.transform;
+            var origin = ts.position;
+            ts.Translate(this.power * this.direction, 0, 0);
             this.power -= this.speed;
             float length = (transform.position - origin).magnitude;
             Vector3 direction = transform.position - origin;
-            bool isCollided = Physics.Raycast(this.transform.position, direction, length);
+            bool isCollided = Physics.Raycast(ts.position, direction, out hit, length);
 
-            if (this.power <= 0 || isCollided) {
-                GameObject.Instantiate(this.effect, this.transform.position, this.transform.rotation);
+            if (isCollided) {
+                GameObject.Instantiate(this.effect, hit.point, ts.rotation);
+                this.direction = -this.direction;
+                ts.rotation = Quaternion.Euler(ts.rotation.eulerAngles * 1.2f);
+
+                var battle = hit.transform.gameObject.GetComponent<Battle>();
+
+                if (battle != null) {
+                    battle.Beaten();
+                }
+            }
+            
+            if (this.power <= 0) {
                 GameObject.Destroy(this.gameObject);
             }
         }

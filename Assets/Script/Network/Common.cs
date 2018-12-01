@@ -98,6 +98,7 @@ namespace Game.Network {
         public class Sync : MessageBase {
             public List<List<Snapshot>> syncList;
             public List<Snapshot> selfList;
+            public List<Snapshot> serverList;
 
             public override void Serialize(NetworkWriter writer) {
                 writer.Write(this.syncList.Count);
@@ -117,6 +118,7 @@ namespace Game.Network {
                 int count = reader.ReadInt32();
                 var assembly = Assembly.GetExecutingAssembly();
                 this.selfList = new List<Snapshot>();
+                this.serverList = new List<Snapshot>();
 
                 for (int i = 0; i < count; i++) {
                     var list = new List<Snapshot>();
@@ -127,7 +129,15 @@ namespace Game.Network {
                         var s = assembly.CreateInstance(type) as Snapshot;
                         s.Deserialize(reader, true);
                         
-                        var sl = s.fd == fd ? this.selfList : list;
+                        List<Snapshot> sl;
+
+                        if (s.fd == fd) {
+                            sl = s.fromServer ? this.serverList : this.selfList;
+                        }
+                        else {
+                            sl = list;
+                        }
+
                         sl.Add(s);
                     }
 

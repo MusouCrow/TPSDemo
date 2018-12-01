@@ -4,10 +4,11 @@ using UnityEngine;
 namespace Game.Actor {
     using Network;
 
-    public class Fire : MonoBehaviour {
+    public class Shooting : MonoBehaviour {
         public GameObject bullet;
 
         private Identity identity;
+        private Shaking shaking;
         private Vector3 velocity; 
         private int shootingCount;
 
@@ -15,6 +16,8 @@ namespace Game.Actor {
             this.identity = this.GetComponent<Identity>();
             this.identity.BindEvent(typeof(Snapshots.Rotate), this.Rotate);
             this.identity.BindEvent(typeof(Snapshots.Shoot), this.Shoot);
+
+            this.shaking = this.GetComponent<Shaking>();
         }
 
         protected void FixedUpdate() {
@@ -48,6 +51,7 @@ namespace Game.Actor {
             if (this.shootingCount > 0) {
                 GameObject.Instantiate(this.bullet, this.transform.position + this.transform.TransformDirection(Vector3.right), this.transform.rotation);
                 this.shootingCount--;
+                this.shaking.Shake(0.3f, 0.05f);
             }
         }
 

@@ -6,37 +6,43 @@ namespace Game.Actor {
         public string fd;
         public Vector3 position;
         public Quaternion rotation;
+        public int hp;
 
         public void Serialize(NetworkWriter writer) {
             writer.Write(this.fd);
             writer.Write(this.position);
             writer.Write(this.rotation);
+            writer.Write(this.hp);
         }
 
         public void Deserialize(NetworkReader reader) {
             this.fd = reader.ReadString();
             this.position = reader.ReadVector3();
             this.rotation = reader.ReadQuaternion();
+            this.hp = reader.ReadInt32();
         }
     }
 
     public class Snapshot {
         public string fd;
         public int frame;
+        public bool fromServer;
 
         public virtual void Serialize(NetworkWriter writer, bool isFull) {
             writer.Write(this.GetType().ToString());
             writer.Write(this.fd);
             writer.Write(this.frame);
+            writer.Write(this.fromServer);
         }
 
         public virtual void Deserialize(NetworkReader reader, bool isFull) {
             this.fd = reader.ReadString();
             this.frame = reader.ReadInt32();
+            this.fromServer = reader.ReadBoolean();
         }
 
         public virtual bool Equals(Snapshot snapshot) {
-            return this.fd == snapshot.fd && this.frame == snapshot.frame;
+            return this.fd == snapshot.fd && this.frame == snapshot.frame && this.fromServer == snapshot.fromServer;
         }
 
         public virtual string Print() {
@@ -142,6 +148,35 @@ namespace Game.Actor {
 
                 var shoot = snapshot as Shoot;
                 return this.position == shoot.position && this.rotation == shoot.rotation;
+            }
+        }
+
+        public class Damage : Snapshot {
+            public int hp;
+
+            public override void Serialize(NetworkWriter writer, bool isFull) {
+                base.Serialize(writer, isFull);
+
+                if (isFull) {
+                    writer.Write(this.hp);
+                }
+            }
+
+            public override void Deserialize(NetworkReader reader, bool isFull) {
+                base.Deserialize(reader, isFull);
+                
+                if (isFull) {
+                    this.hp = reader.ReadInt32();
+                }
+            }
+            
+            public override bool Equals(Snapshot snapshot) {
+                if (!base.Equals(snapshot)) {
+                    return false;
+                }
+
+                var damage = snapshot as Damage;
+                return this.hp == damage.hp;
             }
         }
     }
