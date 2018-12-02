@@ -7,12 +7,14 @@ namespace Game.Actor {
         public Vector3 position;
         public Quaternion rotation;
         public int hp;
+        public float velocityY;
 
         public void Serialize(NetworkWriter writer) {
             writer.Write(this.fd);
             writer.Write(this.position);
             writer.Write(this.rotation);
             writer.Write(this.hp);
+            writer.Write(this.velocityY);
         }
 
         public void Deserialize(NetworkReader reader) {
@@ -20,6 +22,7 @@ namespace Game.Actor {
             this.position = reader.ReadVector3();
             this.rotation = reader.ReadQuaternion();
             this.hp = reader.ReadInt32();
+            this.velocityY = reader.ReadSingle();
         }
     }
 
@@ -179,5 +182,8 @@ namespace Game.Actor {
                 return this.hp == damage.hp;
             }
         }
+
+        public class JumpReady : Snapshot {}
+        public class Jump : Move {}
     }
 }

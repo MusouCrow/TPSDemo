@@ -31,13 +31,6 @@ namespace Game.Actor {
                 this.eventMap[type](snapshot);
             }
         }
-        /*
-        public PlayerData ToPlayerData() {
-            return new PlayerData() {
-                fd = this.fd,
-                position = this.transform.position
-            };
-        } */
 
         public void HandlePlayerData(PlayerData playerData) {
             playerData.fd = this.fd;
@@ -56,10 +49,6 @@ namespace Game.Actor {
         public void ServerInput(Snapshot snapshot) {
             if (!ServerMgr.Active) {
                 return;
-            }
-
-            if (ServerMgr.IsPlayer) {
-                this.RunEvent(snapshot);
             }
 
             ServerMgr.Input(this.fd, snapshot);

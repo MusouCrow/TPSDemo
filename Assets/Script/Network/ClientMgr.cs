@@ -117,7 +117,8 @@ namespace Game.Network {
         }
         
         protected void OnGUI() {
-            ActorMgr.Position();
+            GUILayout.Label(this.sendList.Count.ToString());
+            //ActorMgr.Position();
         }
 
         private void Simulate() {

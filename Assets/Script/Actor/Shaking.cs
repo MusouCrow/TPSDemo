@@ -5,12 +5,6 @@ namespace Game.Actor {
     public class Shaking : MonoBehaviour {
         private Sequence sequence;
 
-        protected void FixedUpdate() {
-            if (Input.GetKeyDown(KeyCode.Space)) {
-                this.Shake(0.5f, 0.1f);
-            }
-        }
-
         public void Shake(float duration, float strength) {
             if (this.sequence != null) {
                 this.sequence.Kill();

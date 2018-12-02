@@ -145,7 +145,7 @@ namespace Game.Network {
                 var msg = new Msg.NewPlayer() {
                     playerData = new PlayerData() {
                         fd = fd,
-                        position = new Vector3(x, 0, z)
+                        position = new Vector3(x, 1, z)
                     }
                 };
 
