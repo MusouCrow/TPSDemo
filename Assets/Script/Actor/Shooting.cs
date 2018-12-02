@@ -6,6 +6,7 @@ namespace Game.Actor {
 
     public class Shooting : MonoBehaviour {
         public GameObject bullet;
+        public AudioClip clip;
 
         private Identity identity;
         private Shaking shaking;
@@ -52,6 +53,7 @@ namespace Game.Actor {
                 GameObject.Instantiate(this.bullet, this.transform.position + this.transform.TransformDirection(Vector3.right), this.transform.rotation);
                 this.shootingCount--;
                 this.shaking.Shake(0.3f, 0.05f);
+                AudioSource.PlayClipAtPoint(this.clip, this.transform.position);
             }
         }
 

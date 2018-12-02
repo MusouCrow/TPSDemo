@@ -6,6 +6,8 @@ namespace Game.Actor {
         public float power;
         public float speed;
         public GameObject effect;
+        public AudioClip clip;
+
         private int direction = 1;
 
         protected void FixedUpdate() {
@@ -22,6 +24,7 @@ namespace Game.Actor {
                 GameObject.Instantiate(this.effect, hit.point, ts.rotation);
                 this.direction = -this.direction;
                 ts.rotation = Quaternion.Euler(ts.rotation.eulerAngles * 1.2f);
+                AudioSource.PlayClipAtPoint(this.clip, ts.position);
 
                 var battle = hit.transform.gameObject.GetComponent<Battle>();
 

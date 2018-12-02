@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
@@ -57,7 +56,6 @@ namespace Game.Network {
         private int frameCount;
         private Dictionary<string, Unit> unitMap;
         private List<List<Snapshot>> syncList;
-        private StreamWriter writer;
 
         protected void Awake() {
             INSTANCE = this;
@@ -77,8 +75,6 @@ namespace Game.Network {
                 Destroy(this);
                 return;
             }
-
-            //this.writer = new StreamWriter("server.log");
         }
 
         protected void FixedUpdate() {
@@ -114,11 +110,6 @@ namespace Game.Network {
                     ClientMgr.AddSync(list);
                     this.syncList.Add(list);
                 }
-                /*
-                if (UnityEngine.Input.GetKeyDown(KeyCode.Space)) {
-                    this.server.Close();
-                    //this.writer.Close();
-                } */
             }
         }
 
@@ -154,11 +145,6 @@ namespace Game.Network {
 
             print("New Client: " + fd);
         }
-
-        /*
-        protected void OnGUI() {
-            GUILayout.Label(this.syncList.Count.ToString());
-        } */
 
         private void DelConnection(byte msgId, NetworkReader reader, IPEndPoint ep) {
             var fd = ep.ToString();

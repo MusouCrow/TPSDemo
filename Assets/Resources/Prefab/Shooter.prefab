@@ -189,6 +189,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bullet: {fileID: 1357331329156334, guid: 73f280442909f4c0c806a344d3ec295b, type: 2}
+  clip: {fileID: 8300000, guid: 43cc5bdf3593348fe88ec4d561e05ac5, type: 3}
 --- !u!114 &114193673374078354
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Collections.Generic;
 using UnityEngine;
@@ -64,7 +63,6 @@ namespace Game.Network {
         private string fd;
         private int laterSendFrame;
         private int snapshotFrameCount;
-        private StreamWriter writer;
 
         protected void Awake() {
             INSTANCE = this;
@@ -114,11 +112,6 @@ namespace Game.Network {
                     this.snapshotFrameCount = 0;
                 }
             }
-        }
-        
-        protected void OnGUI() {
-            GUILayout.Label(this.sendList.Count.ToString());
-            //ActorMgr.Position();
         }
 
         private void Simulate() {

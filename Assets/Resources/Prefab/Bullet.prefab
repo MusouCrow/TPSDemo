@@ -192,6 +192,7 @@ MonoBehaviour:
   power: 3
   speed: 0.05
   effect: {fileID: 1364103279484132, guid: 2150f809efd1b43ff91f17869c8953b6, type: 2}
+  clip: {fileID: 8300000, guid: 729ddd9ebd2324b3d8e354017f97bbf9, type: 3}
 --- !u!135 &135997709310219476
 SphereCollider:
   m_ObjectHideFlags: 1
