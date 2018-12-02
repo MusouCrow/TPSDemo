@@ -12,11 +12,11 @@ namespace Game.Actor {
 
         protected void Start() {
             this.transform = this.GetComponent<RectTransform>();
-            this.hp = this.battle.hp;
-
+            
             var name = this.battle.gameObject.name;
             int pos = name.IndexOf(':');
             this.text.text = name.Substring(pos + 1);
+            this.FixedUpdate();
         }
 
         protected void FixedUpdate() {

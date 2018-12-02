@@ -54,10 +54,6 @@ namespace Game.Actor {
             }
         }
 
-        public void HandlePlayerData(PlayerData playerData) {
-            
-        }
-
         private void Move(Snapshot snapshot) {
             var move = snapshot as Snapshots.Move;
             
