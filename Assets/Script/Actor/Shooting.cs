@@ -24,8 +24,9 @@ namespace Game.Actor {
         protected void FixedUpdate() {
             if (this.identity.IsPlayer) {
                 var value = Input.GetAxis("Mouse X");
+                //print("FixedUpdate: " + Time.frameCount + ", " + Time.time);
 
-                if (Mathf.Abs(value) > 0.5f) {
+                if (Mathf.Abs(value) > 0) {
                     var rotate = new Snapshots.Rotate() {
                         velocity = new Vector3(0, value, 0),
                         rotation = this.transform.rotation
@@ -44,6 +45,8 @@ namespace Game.Actor {
         }
 
         public void Simulate() {
+            //print("Simulate: " + Time.frameCount + ", " + Time.time);
+
             if (this.velocity != Vector3.zero) {
                 this.transform.Rotate(this.velocity);
                 this.velocity = Vector3.zero;
