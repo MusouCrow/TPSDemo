@@ -26,9 +26,12 @@ namespace Game.Actor {
 
         public void Beaten() {
             this.shaking.Shake(0.5f, 0.1f);
-            this.hp -= 1;
-            this.hp = this.hp <= 0 ? this.maxHp : this.hp;
-            this.identity.ServerInput(new Damage() {hp = this.hp});
+            
+            if (ServerMgr.Active) {
+                this.hp -= 1;
+                this.hp = this.hp <= 0 ? this.maxHp : this.hp;
+                this.identity.ServerInput(new Damage() {hp = this.hp});
+            }
         }
 
         public void HandlePlayerData(PlayerData playerData) {

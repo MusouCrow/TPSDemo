@@ -34,10 +34,10 @@ namespace Game.Network {
             }
         }
 
-        public static void Input(string fd, Snapshot snapshot) {
+        public static void Input(string fd, Snapshot snapshot, bool fromServer) {
             snapshot.fd = fd;
             snapshot.frame = INSTANCE.frameCount;
-            snapshot.fromServer = true;
+            snapshot.fromServer = fromServer;
             var unitMap = INSTANCE.unitMap;
 
             if (!unitMap.ContainsKey(fd)) {

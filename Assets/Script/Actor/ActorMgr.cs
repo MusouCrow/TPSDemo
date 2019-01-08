@@ -76,9 +76,10 @@ namespace Game.Actor {
             player.SendMessage("Simulate");
         }
 
-        public static void Position() {
+        public static void Debug() {
             foreach (var p in ActorMgr.playerMap) {
-                GUILayout.Label(p.Key + ": " + p.Value.GetComponent<Transform>().position.ToString());
+                var v = p.Value;
+                GUILayout.Label(p.Key + ": " + v.GetComponent<Transform>().position.ToString() + ", " + v.GetComponent<Battle>().hp);
             }
         }
     }
