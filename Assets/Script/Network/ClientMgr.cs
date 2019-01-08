@@ -41,7 +41,20 @@ namespace Game.Network {
         }
 
         public static void AddSync(List<Snapshot> list) {
-            INSTANCE.syncList.Add(list);
+            if (ServerMgr.IsPlayer) {
+                var sl = new List<Snapshot>();
+
+                foreach (var s in list) {
+                    if (s.fd != INSTANCE.fd || s.fromServer) {
+                        sl.Add(s);
+                    }
+                }
+
+                INSTANCE.syncList.Add(sl);
+            }
+            else {
+                INSTANCE.syncList.Add(list);
+            }
         }
 
         public static string FD {
@@ -98,7 +111,7 @@ namespace Game.Network {
                         this.Simulate();
                     }
                 }
-
+                
                 if (this.frameCount % INTERVAL == 0) {
                     var msg = new Msg.Input() {
                         snapshotFrameCount = this.snapshotFrameCount,
@@ -109,6 +122,10 @@ namespace Game.Network {
                     this.snapshotFrameCount = 0;
                 }
             }
+        }
+
+        protected void OnGUI() {
+            ActorMgr.Debug();
         }
 
         private void Simulate() {

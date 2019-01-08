@@ -40,9 +40,12 @@ namespace Game.Actor {
 
         public void Input(Snapshot snapshot) {
             this.RunEvent(snapshot);
-            
+
             if (!ServerMgr.Active) {
                 ClientMgr.Input(snapshot);
+            }
+            else {
+                ServerMgr.Input(this.fd, snapshot, false);
             }
         }
 
@@ -51,7 +54,7 @@ namespace Game.Actor {
                 return;
             }
 
-            ServerMgr.Input(this.fd, snapshot);
+            ServerMgr.Input(this.fd, snapshot, true);
         }
     }
 }
